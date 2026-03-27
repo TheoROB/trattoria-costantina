@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trattoria Costantina — Cuisine italienne à Paris</title>
+  <meta name="description" content="Trattoria Costantina, cuisine italienne authentique à Paris inspirée des recettes de Nonna Costantina des Pouilles.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav id="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">Trattoria Costantina</a>
+      <ul class="nav-links">
+        <li><a href="#histoire">Notre Histoire</a></li>
+        <li><a href="#specialites">La Carte</a></li>
+        <li><a href="#reservation">Réserver</a></li>
+        <li><a href="#trouver">Contact</a></li>
+      </ul>
+      <a href="#reservation" class="btn btn-primary nav-cta">Réserver</a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg">
+      <img src="images/hero.png" alt="Trattoria Costantina" />
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <p class="supertitle supertitle-light">
+        <span class="line"></span>
+        Découvrir la Nonna
+        <span class="line"></span>
+      </p>
+      <h1>Les recettes de Nonna<br>voyagent de la Puglia<br>jusqu'à votre table</h1>
+      <p class="hero-subtitle">Une cuisine italienne faite maison, inspirée par Nonna Costantina et ses recettes authentiques des Pouilles. Chaque plat est une lettre d'amour.</p>
+      <div class="hero-actions">
+        <a href="#specialites" class="btn btn-primary">Découvrir la carte</a>
+        <a href="#reservation" class="btn btn-outline-light">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Réserver une table
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOTRE HISTOIRE -->
+  <section id="histoire" class="section-histoire">
+    <div class="container">
+      <div class="histoire-grid">
+        <div class="histoire-image">
+          <img src="images/histoire.png" alt="Notre histoire — Trattoria Costantina" />
+        </div>
+        <div class="histoire-content">
+          <p class="supertitle supertitle-left">
+            <span class="line"></span>
+            Notre Famille
+          </p>
+          <h2>Notre Histoire</h2>
+          <div class="title-divider"></div>
+          <p>Tout a commencé loin de nos assiettes en Puglia, chez Nonna Costantina. Dans sa petite cuisine baignée de soleil, elle préparait ses plats avec un amour infini et des recettes transmises depuis des générations.</p>
+          <blockquote>
+            « La vraie cuisine, c'est celle qu'on fait avec le cœur et les saisons — <em>Nonna Costantina</em> »
+          </blockquote>
+          <p>En ouvrant Trattoria Costantina, j'ai voulu transmettre cet héritage. Chaque jour, je perpétue les gestes de ma grand-mère, des pâtes pétries à la main, les sauces mitonnées lentement, les légumes du marché sélectionnés avec soin.</p>
+          <p>Chaque assiette est une lettre d'amour à Nonna — et une invitation à rejoindre notre famille.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOS SPÉCIALITÉS -->
+  <section id="specialites" class="section-specialites">
+    <div class="container">
+      <div class="section-header">
+        <p class="supertitle"><span class="line"></span>La Carte<span class="line"></span></p>
+        <h2>Nos Spécialités</h2>
+        <p class="section-subtitle">Des recettes authentiques des Pouilles, préparées avec des ingrédients frais et de saison</p>
+      </div>
+
+      <div class="food-grid">
+        <div class="food-item"><img src="images/food-1.png" alt="Burrata des Pouilles" /></div>
+        <div class="food-item"><img src="images/food-2.png" alt="Orecchiette alle Cime di Rapa" /></div>
+        <div class="food-item"><img src="images/food-3.png" alt="Panna Cotta alla Pugliese" /></div>
+        <div class="food-item"><img src="images/food-4.png" alt="Burrata aux tomates" /></div>
+        <div class="food-item"><img src="images/food-5.png" alt="Pasta pugliese" /></div>
+        <div class="food-item"><img src="images/food-6.png" alt="Dessert maison" /></div>
+      </div>
+
+      <div class="menu-grid">
+        <div class="menu-category">
+          <h3>Antipasti & Primi</h3>
+          <ul class="menu-items">
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Burrata des Pouilles</span>
+                <span class="menu-desc">Burrata crémeuse, tomates cerises, huile d'olive des Pouilles</span>
+              </div>
+              <span class="menu-price">10€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Carpaccio di Manzo</span>
+                <span class="menu-desc">Bœuf finement tranché, câpres, parmesan et roquette</span>
+              </div>
+              <span class="menu-price">10€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Orecchiette alle Cime di Rapa</span>
+                <span class="menu-desc">Pâtes fraîches maison, broccolini, anchois, chapelure dorée</span>
+              </div>
+              <span class="menu-price">10€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Focaccia Barese</span>
+                <span class="menu-desc">Focaccia pugliese aux olives, romarin, sel de mer</span>
+              </div>
+              <span class="menu-price">6€</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="menu-category">
+          <h3>Les Plats de Nonna</h3>
+          <ul class="menu-items">
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Truffe di Riso</span>
+                <span class="menu-desc">Croquettes de riz au fromage et truffe noire, sauce tomate maison</span>
+              </div>
+              <span class="menu-price">13€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Agnello al Forno</span>
+                <span class="menu-desc">Agneau rôti aux herbes, pommes de terre, romarin, tomates confites</span>
+              </div>
+              <span class="menu-price">22€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Polpette alla Griglia</span>
+                <span class="menu-desc">Boulettes grillées de veau, sauce tomate fraîche, basilic</span>
+              </div>
+              <span class="menu-price">25€</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="menu-category">
+          <h3>Dolci & Desserts</h3>
+          <ul class="menu-items">
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Panna Cotta alla Pugliese</span>
+                <span class="menu-desc">Panna cotta vanille, coulis de figues, amandes grillées</span>
+              </div>
+              <span class="menu-price">9€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Pasticciotto Leccese</span>
+                <span class="menu-desc">Chausson sablé à la crème de citron, spécialité du Salento</span>
+              </div>
+              <span class="menu-price">8€</span>
+            </li>
+            <li>
+              <div class="menu-item-info">
+                <span class="menu-name">Tartufo al Cioccolato</span>
+                <span class="menu-desc">Glace artisanale au chocolat noir enrobée de cacao amer</span>
+              </div>
+              <span class="menu-price">10€</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-cta">
+        <a href="#reservation" class="btn btn-primary">Voir la carte complète</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- RÉSERVATION -->
+  <section id="reservation" class="section-reservation">
+    <div class="container">
+      <div class="reservation-grid">
+        <div class="reservation-info">
+          <p class="supertitle supertitle-left">
+            <span class="line"></span>
+            Réservation
+          </p>
+          <h2>Réservez<br>Votre Table</h2>
+          <p>Laissez-vous enivrer par une cuisine italienne authentique dans un cadre chaleureux et raffiné. Notre chef prépare chaque plat avec des ingrédients frais, importés directement d'Italie, pour une expérience gastronomique inoubliable.</p>
+          <ul class="contact-info">
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>42 Rue des Oliviers, 75011 Paris, France</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013 12.28 19.79 19.79 0 01-.07 3.61a2 2 0 011.73-2.11h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L6.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>
+              <span>+33 (0)1 42 58 73 21</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>bonjour@trattoria-costantina.fr</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reservation-form-card">
+          <h3>Réserver une table</h3>
+          <p class="form-subtitle">Choisissez votre date ci-dessous</p>
+          <form id="reservationForm">
+            <div class="form-group">
+              <label for="date">Date</label>
+              <div class="input-with-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <input type="date" id="date" name="date" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="heure">Heure</label>
+                <div class="input-with-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <select id="heure" name="heure" required>
+                    <option value="">Heure</option>
+                    <option>12:00</option>
+                    <option>12:30</option>
+                    <option>13:00</option>
+                    <option>13:30</option>
+                    <option>19:00</option>
+                    <option>19:30</option>
+                    <option>20:00</option>
+                    <option>20:30</option>
+                    <option>21:00</option>
+                    <option>21:30</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="personnes">Personnes</label>
+                <select id="personnes" name="personnes" required>
+                  <option value="">Pers.</option>
+                  <option>1 pers.</option>
+                  <option selected>2 pers.</option>
+                  <option>3 pers.</option>
+                  <option>4 pers.</option>
+                  <option>5 pers.</option>
+                  <option>6 pers.</option>
+                  <option>7+ pers.</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Réserver une table</button>
+            <p class="form-note">Réservation gratuite et sans frais</p>
+          </form>
+          <div id="reservationSuccess" class="reservation-success" style="display:none">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <h4>Demande envoyée !</h4>
+            <p>Nous vous contacterons rapidement pour confirmer votre réservation.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VENEZ COMME EN FAMILLE -->
+  <section class="section-famille">
+    <div class="famille-bg">
+      <img src="images/famille.png" alt="Terrasse Trattoria Costantina" />
+      <div class="famille-overlay"></div>
+    </div>
+    <div class="famille-content">
+      <div class="divider-diamond">✦</div>
+      <h2>Venez comme en famille</h2>
+      <p>Réservez votre table à la Trattoria Costantina et laissez-nous vous accueillir dans un cadre chaleureux, comme Nonna le faisait dans les Pouilles.</p>
+      <div class="famille-actions">
+        <a href="#reservation" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Réserver une table
+        </a>
+        <a href="tel:+33142587321" class="btn btn-outline-light">Appelez-nous</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOUS TROUVER -->
+  <section id="trouver" class="section-trouver">
+    <div class="container">
+      <div class="section-header">
+        <p class="supertitle"><span class="line"></span>Adresse<span class="line"></span></p>
+        <h2>Nous trouver</h2>
+        <p class="section-subtitle">Nous partageons le sentiment de convivialité autour de notre cuisine italienne à Paris</p>
+      </div>
+      <div class="trouver-grid">
+        <div class="trouver-left">
+          <ul class="contact-info-large">
+            <li>
+              <div class="contact-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div>
+                <strong>Adresse</strong>
+                <span>42 Rue des Oliviers<br>75011 Paris, France</span>
+              </div>
+            </li>
+            <li>
+              <div class="contact-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013 12.28 19.79 19.79 0 01-.07 3.61a2 2 0 011.73-2.11h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L6.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>
+              </div>
+              <div>
+                <strong>Téléphone</strong>
+                <span>+33 (0)1 42 58 73 21</span>
+              </div>
+            </li>
+            <li>
+              <div class="contact-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div>
+                <strong>Email</strong>
+                <span>bonjour@trattoria-costantina.fr</span>
+              </div>
+            </li>
+          </ul>
+          <div class="trouver-photos">
+            <img src="images/terrasse-1.png" alt="Notre terrasse" />
+            <img src="images/terrasse-2.png" alt="Ambiance" />
+          </div>
+        </div>
+
+        <div class="horaires-card">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Horaires d'ouverture
+          </h3>
+          <ul class="horaires">
+            <li>
+              <span class="jour">Mardi — Vendredi</span>
+              <span class="heures">12h – 14h30 / 19h – 23h</span>
+            </li>
+            <li>
+              <span class="jour">Samedi</span>
+              <span class="heures">12h – 15h / 19h – 23h30</span>
+            </li>
+            <li>
+              <span class="jour">Dimanche</span>
+              <span class="heures">12h – 14h30 / 19h – 22h30</span>
+            </li>
+            <li class="ferme-row">
+              <span class="jour">Lundi</span>
+              <span class="heures ferme-text">Fermé</span>
+            </li>
+          </ul>
+          <div class="horaires-note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p>Tous les plats sont préparés avec des ingrédients frais sélectionnés chaque matin au marché. Certains plats peuvent être indisponibles selon les arrivages.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-quote">
+      « La cucina è l'arte di trasformare gli ingredienti in amore »
+    </div>
+    <div class="footer-main container">
+      <div class="footer-brand">
+        <h4>Trattoria Costantina</h4>
+        <p>Une cuisine italienne faite maison, inspirée des recettes de Nonna Costantina en provenance des Pouilles. Chaque plat est un voyage.</p>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" aria-label="Facebook">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          </a>
+          <a href="#" aria-label="TikTok">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-nav-col">
+        <h5>Navigation</h5>
+        <ul>
+          <li><a href="#histoire">Notre Histoire</a></li>
+          <li><a href="#specialites">La Carte</a></li>
+          <li><a href="#reservation">Réserver</a></li>
+          <li><a href="#trouver">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-nav-col">
+        <h5>Pratique</h5>
+        <ul>
+          <li><a href="#">Accès & Parking</a></li>
+          <li><a href="#">Groupes & Évènements</a></li>
+          <li><a href="#">Allergies & Régimes</a></li>
+          <li><a href="#">Mentions légales</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2024 Trattoria Costantina. Tous droits réservés.</p>
+      <p>Fait avec amour — <em>Come Nonna</em></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
