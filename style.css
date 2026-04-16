@@ -162,16 +162,20 @@ p { font-size: 1rem; color: var(--brown-light); }
 }
 
 .nav-logo {
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  font-weight: 400;
-  color: var(--white);
-  transition: color 0.3s;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
-#navbar.scrolled .nav-logo { color: var(--brown); }
+.nav-logo-img {
+  height: 64px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s;
+}
+
+#navbar.scrolled .nav-logo-img { filter: brightness(0); }
 
 .nav-links {
   display: flex;
@@ -754,12 +758,12 @@ select:focus { border-color: var(--terracotta); }
   padding-bottom: 2.5rem;
 }
 
-.footer-brand h4 {
-  font-family: var(--font-serif);
-  font-size: 1.25rem;
-  font-weight: 400;
-  color: var(--cream);
+.footer-logo-img {
+  height: 56px;
+  width: auto;
+  display: block;
   margin-bottom: 0.75rem;
+  filter: brightness(0) invert(1);
 }
 
 .footer-brand p {
