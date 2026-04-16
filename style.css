@@ -141,6 +141,7 @@ p { font-size: 1rem; color: var(--brown-light); }
   left: 0;
   right: 0;
   z-index: 100;
+  background: transparent;
   transition: background 0.3s ease, box-shadow 0.3s ease;
   height: var(--nav-height);
 }
@@ -530,6 +531,8 @@ select {
 
 input[type="date"]:focus,
 select:focus { border-color: var(--terracotta); }
+
+.input-with-icon input[type="date"] { padding-left: 2.5rem; }
 
 .reservation-form-card .btn-primary {
   margin-top: 0.5rem;
