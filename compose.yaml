@@ -1,0 +1,16 @@
+# Local development / test database only. Production uses the Hostinger MySQL/MariaDB.
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: root-dev-only
+      MARIADB_DATABASE: trattoria
+      MARIADB_USER: trattoria
+      MARIADB_PASSWORD: trattoria-dev-only
+    ports:
+      - '127.0.0.1:3307:3306'
+    volumes:
+      - ./db/dev/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - db-data:/var/lib/mysql
+volumes:
+  db-data:

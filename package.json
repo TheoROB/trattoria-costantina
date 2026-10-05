@@ -11,10 +11,14 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test": "vitest run --project unit",
+    "test:e2e": "playwright test",
+    "test:integration": "node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --project integration",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.mts"
   },
   "dependencies": {
+    "mysql2": "3.24.5",
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0"
@@ -26,6 +30,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.8",
+    "server-only": "0.0.1",
     "typescript": "6.0.3",
     "vitest": "5.0.3"
   }
