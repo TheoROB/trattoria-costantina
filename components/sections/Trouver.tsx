@@ -1,10 +1,9 @@
-import { ClockIcon, MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
+import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
+import { Picture } from '@/components/Picture'
+import { practicalInfo, site } from '@/lib/site'
 
-const horaires = [
-  { jour: 'Mardi — Vendredi', heures: '12h – 14h30 / 19h – 23h' },
-  { jour: 'Samedi', heures: '12h – 15h / 19h – 23h30' },
-  { jour: 'Dimanche', heures: '12h – 14h30 / 19h – 22h30' },
-]
+// Mirrors .trouver-grid / .trouver-photos: 2 columns of a 2-column grid inside the 1200px container.
+const photoSizes = '(max-width: 640px) calc(100vw - 64px), (max-width: 900px) calc(50vw - 38px), (max-width: 1200px) calc(25vw - 34px), 266px'
 
 export function Trouver() {
   return (
@@ -22,50 +21,54 @@ export function Trouver() {
                 <div className="contact-icon"><PinIcon /></div>
                 <div>
                   <strong>Adresse</strong>
-                  <span>3 Rue Denis Papin<br />62110 Hénin-Beaumont, France</span>
+                  <span>{site.address.street}<br />{site.address.postalCode} {site.address.city}, {site.address.country}</span>
                 </div>
               </li>
               <li>
                 <div className="contact-icon"><PhoneIcon /></div>
                 <div>
                   <strong>Téléphone</strong>
-                  <span>+33 (0)1 42 58 73 21</span>
+                  <span><a href={site.phone.href}>{site.phone.display}</a></span>
                 </div>
               </li>
               <li>
                 <div className="contact-icon"><MailIcon /></div>
                 <div>
                   <strong>Email</strong>
-                  <span>bonjour@trattoria-costantina.fr</span>
+                  <span><a href={site.email.href}>{site.email.display}</a></span>
                 </div>
               </li>
             </ul>
             <div className="trouver-photos">
-              <img src="/images/terrasse-1.png" alt="Notre terrasse" />
-              <img src="/images/terrasse-2.png" alt="Ambiance" />
+              <Picture
+                image="trouver-facade"
+                alt="Façade de la Trattoria Costantina, 3 rue Denis Papin à Hénin-Beaumont"
+                sizes={photoSizes}
+              />
+              <Picture
+                image="trouver-terrasse"
+                alt="Terrasse ensoleillée avec oliviers en pot et bancs en bois"
+                sizes={photoSizes}
+              />
             </div>
           </div>
 
           <div className="horaires-card">
             <h3>
-              <ClockIcon size={20} strokeWidth={1.5} />
-              Horaires d&apos;ouverture
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+              Infos pratiques
             </h3>
             <ul className="horaires">
-              {horaires.map((h) => (
-                <li key={h.jour}>
-                  <span className="jour">{h.jour}</span>
-                  <span className="heures">{h.heures}</span>
+              {practicalInfo.map((info) => (
+                <li key={info.label}>
+                  <span className="jour">{info.label}</span>
+                  <span className="heures">{info.value}</span>
                 </li>
               ))}
-              <li className="ferme-row">
-                <span className="jour">Lundi</span>
-                <span className="heures ferme-text">Fermé</span>
-              </li>
             </ul>
             <div className="horaires-note">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-              <p>Tous les plats sont préparés avec des ingrédients frais sélectionnés chaque matin au marché. Certains plats peuvent être indisponibles selon les arrivages.</p>
+              <p>Pour connaître nos horaires ou organiser un repas de groupe, appelez-nous au <a href={site.phone.href}>{site.phone.display}</a>.</p>
             </div>
           </div>
         </div>

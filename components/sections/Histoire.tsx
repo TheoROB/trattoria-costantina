@@ -1,10 +1,17 @@
+import { Picture } from '@/components/Picture'
+
 export function Histoire() {
   return (
     <section id="histoire" className="section-histoire">
       <div className="container">
         <div className="histoire-grid">
           <div className="histoire-image">
-            <img src="/images/histoire.png" alt="Notre histoire — Trattoria Costantina" />
+            <Picture
+              image="histoire"
+              alt="Table dressée d'une nappe vichy rouge devant le mur de photos de famille en noir et blanc"
+              sizes="(max-width: 1200px) calc(50vw - 72px), 528px"
+              artDirection={[{ image: 'histoire-wide', media: '(max-width: 900px)', sizes: 'calc(100vw - 4rem)' }]}
+            />
           </div>
           <div className="histoire-content">
             <p className="supertitle supertitle-left">
@@ -13,12 +20,13 @@ export function Histoire() {
             </p>
             <h2>Notre Histoire</h2>
             <div className="title-divider"></div>
-            <p>Tout a commencé loin de nos assiettes en Puglia, chez Nonna Costantina. Dans sa petite cuisine baignée de soleil, elle préparait ses plats avec un amour infini et des recettes transmises depuis des générations.</p>
+            <p>La Trattoria Costantina est un endroit où l&apos;on vous propose une cuisine italienne faite maison, et avec amour.</p>
+            <p>Tout a commencé dès mon plus jeune âge lorsque je rendais visite à ma Nonna Costantina, et qu&apos;elle me préparait ses bons petits plats directement inspirés de la région des Pouilles, dans le sud de l&apos;Italie.</p>
+            <p>Aujourd&apos;hui, en hommage à ma Nonna, il me tient à cœur de partager avec vous ce qu&apos;elle m&apos;a transmis, le tout dans un cadre chaleureux et accueillant.</p>
+            <p>Au plaisir de vous accueillir,</p>
             <blockquote>
-              « La vraie cuisine, c&apos;est celle qu&apos;on fait avec le cœur et les saisons — <em>Nonna Costantina</em> »
+              « Ci vediamo presto ! » — <em>Julien Panfilo</em>
             </blockquote>
-            <p>En ouvrant Trattoria Costantina, j&apos;ai voulu transmettre cet héritage. Chaque jour, je perpétue les gestes de ma grand-mère, des pâtes pétries à la main, les sauces mitonnées lentement, les légumes du marché sélectionnés avec soin.</p>
-            <p>Chaque assiette est une lettre d&apos;amour à Nonna — et une invitation à rejoindre notre famille.</p>
           </div>
         </div>
       </div>

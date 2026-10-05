@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Picture } from '@/components/Picture'
 
-export function Navbar() {
+/** `solid` keeps the scrolled (opaque) style on pages without a dark hero, e.g. /mentions-legales. */
+export function Navbar({ solid = false }: { solid?: boolean }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -15,18 +18,18 @@ export function Navbar() {
   const close = () => setOpen(false)
 
   return (
-    <nav id="navbar" className={scrolled ? 'scrolled' : undefined}>
+    <nav id="navbar" className={solid || scrolled ? 'scrolled' : undefined}>
       <div className="nav-container">
-        <a href="#" className="nav-logo">
-          <img src="/images/logo.png" alt="Trattoria Costantina" className="nav-logo-img" />
-        </a>
+        <Link href="/" className="nav-logo">
+          <Picture image="logo" alt="Trattoria Costantina" sizes="156px" className="nav-logo-img" loading="eager" />
+        </Link>
         <ul className={open ? 'nav-links open' : 'nav-links'}>
-          <li><a href="#histoire" onClick={close}>Notre Histoire</a></li>
-          <li><a href="#specialites" onClick={close}>La Carte</a></li>
-          <li><a href="#reservation" onClick={close}>Réserver</a></li>
-          <li><a href="#trouver" onClick={close}>Contact</a></li>
+          <li><Link href="/#histoire" onClick={close}>Notre Histoire</Link></li>
+          <li><Link href="/#specialites" onClick={close}>La Carte</Link></li>
+          <li><Link href="/#reservation" onClick={close}>Réserver</Link></li>
+          <li><Link href="/#trouver" onClick={close}>Contact</Link></li>
         </ul>
-        <a href="#reservation" className="btn btn-primary nav-cta">Réserver</a>
+        <Link href="/#reservation" className="btn btn-primary nav-cta">Réserver</Link>
         <button className="nav-toggle" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           <span></span><span></span><span></span>
         </button>
