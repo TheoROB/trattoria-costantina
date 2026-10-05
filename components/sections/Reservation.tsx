@@ -1,5 +1,5 @@
 import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
-import { ReservationForm } from './ReservationForm'
+import { DishWidget } from './DishWidget'
 
 export function Reservation() {
   return (
@@ -20,19 +20,18 @@ export function Reservation() {
               </li>
               <li>
                 <PhoneIcon />
-                <span>+33 (0)1 42 58 73 21</span>
+                <a href="tel:+33978813295">09 78 81 32 95</a>
               </li>
               <li>
                 <MailIcon />
-                <span>bonjour@trattoria-costantina.fr</span>
+                <a href="mailto:trattoria.costantina@gmail.com">trattoria.costantina@gmail.com</a>
               </li>
             </ul>
           </div>
 
           <div className="reservation-form-card">
             <h3>Réserver une table</h3>
-            <p className="form-subtitle">Choisissez votre date ci-dessous</p>
-            <ReservationForm />
+            <DishWidget />
           </div>
         </div>
       </div>
