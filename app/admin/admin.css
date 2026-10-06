@@ -81,3 +81,6 @@
   .admin-main { padding: 2rem 1.5rem 4rem; }
   .admin-item-actions { grid-template-columns: repeat(3, 1fr); }
 }
+
+.admin-error p { color: var(--brown-light); margin-bottom: 1rem; }
+.admin-login .admin-error { width: 100%; max-width: 400px; }

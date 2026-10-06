@@ -154,6 +154,21 @@ test('deletes an item only after confirmation', async ({ page }) => {
   await expect(page.getByText('Tiramisù', { exact: true })).toHaveCount(0)
 })
 
+test('a network failure during an action keeps the admin usable', async ({ page }) => {
+  const violations: string[] = []
+  page.on('console', (m) => m.type() === 'error' && /Content Security Policy/.test(m.text()) && violations.push(m.text()))
+  await login(page, 'julien')
+  await page.route('**/admin', (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()))
+  await adminItem(page, 'Boisson Test 1').getByRole('button', { name: 'Masquer' }).click()
+  await expect(page.getByRole('heading', { name: 'Une erreur est survenue' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+  await page.unroute('**/admin')
+  await page.getByRole('button', { name: 'Réessayer' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('La carte')
+  await expect(adminItem(page, 'Boisson Test 1')).not.toContainText('Masqué')
+  expect(violations).toEqual([])
+})
+
 test('an unknown item returns a 404', async ({ page }) => {
   await login(page, 'julien')
   expect((await page.goto('/admin/menu/999999'))?.status()).toBe(404)

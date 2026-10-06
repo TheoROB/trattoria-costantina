@@ -54,7 +54,7 @@ export function ItemForm({ action, item }: Props) {
 
       <div className="admin-field admin-field-price">
         <label htmlFor="item-price">Prix (€)</label>
-        <input id="item-price" name="price" inputMode="decimal" required placeholder="12,50" maxLength={16}
+        <input id="item-price" type="text" name="price" inputMode="decimal" required placeholder="12,50" maxLength={16}
           defaultValue={sent?.price ?? (item ? centsToInput(item.priceCents) : '')} {...describe('price')} />
         <FieldError field="price" errors={errors} />
       </div>
