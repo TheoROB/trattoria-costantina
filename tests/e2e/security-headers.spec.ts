@@ -40,9 +40,18 @@ test('page loads with the CSP enforced and no console errors or violations', asy
   await page.goto('/', { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   expect(errors).toEqual([])
-  // Fonts are self-hosted: no request may leave the origin.
+  // Only the expected DISH widget document may leave the origin.
   const external = await page.evaluate(() =>
-    performance.getEntriesByType('resource').map((r) => r.name).filter((u) => !u.startsWith(location.origin)),
+    performance
+      .getEntriesByType('resource')
+      .map((r) => r.name)
+      .filter(
+        (u) =>
+          !u.startsWith(location.origin) &&
+          !u.startsWith(
+            'https://reservation.dish.co/widget/hydra-0ab49cf0-0e40-11f0-b2b0-112fd36a4b37',
+          ),
+      ),
   )
   expect(external).toEqual([])
 })

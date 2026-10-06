@@ -557,6 +557,28 @@ select:focus { border-color: var(--terracotta); }
 .reservation-success h4 { font-family: var(--font-serif); font-size: 1.4rem; }
 .reservation-success p { font-size: 0.9rem; }
 
+.dish-widget-container {
+  margin-top: 1.5rem;
+}
+
+.dish-widget {
+  display: block;
+  width: 100%;
+  height: 420px;
+  border: 0;
+}
+
+.dish-widget-fallback {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.dish-widget-fallback a {
+  color: var(--terracotta);
+  font-weight: 500;
+}
+
 /* ===========================
    SECTION — FAMILLE (CTA full-width)
    =========================== */
@@ -888,6 +910,8 @@ select:focus { border-color: var(--terracotta); }
   .trouver-photos { grid-template-columns: 1fr; }
 
   .section-famille { height: 480px; }
+
+  .dish-widget { height: 430px; }
 }
 
 /* ===========================

@@ -38,9 +38,3 @@ test('all mockup sections render in order', async ({ page }) => {
     'footer',
   ])
 })
-
-test('reservation date cannot be set before today (mockup behaviour until DISH)', async ({ page }) => {
-  await page.goto('/')
-  const today = await page.evaluate(() => new Date().toISOString().split('T')[0])
-  await expect(page.locator('#date')).toHaveAttribute('min', today)
-})
