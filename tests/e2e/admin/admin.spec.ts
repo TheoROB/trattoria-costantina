@@ -192,4 +192,37 @@ test.describe('on a phone', () => {
     await page.goto('/admin/menu/new')
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
   })
+
+  test('create with a validation error, edit, reorder and delete from a phone', async ({ page }) => {
+    await login(page, 'theo')
+    await page.getByRole('link', { name: 'Nouvel élément' }).tap()
+    await page.getByLabel('Catégorie').selectOption('boissons')
+    await page.getByLabel('Nom').fill('Limonata')
+    await page.getByLabel('Prix (€)').fill('3,5,0')
+    await page.getByRole('button', { name: 'Enregistrer' }).tap()
+    await expect(page.getByText(/Prix invalide/)).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
+    await page.getByLabel('Prix (€)').fill(' 3,50 ')
+    await page.getByRole('button', { name: 'Enregistrer' }).tap()
+    await expect(page).toHaveURL(/\/admin$/)
+    await expect(adminItem(page, 'Limonata')).toContainText('3,50€')
+
+    // New items go last: move it above the existing drink.
+    await adminItem(page, 'Limonata').getByRole('button', { name: 'Monter' }).tap()
+    await expect
+      .poll(() => page.locator('section[aria-labelledby="category-boissons"] .admin-item-name').allTextContents())
+      .toEqual(['Limonata', 'Boisson Test 1'])
+
+    await adminItem(page, 'Limonata').getByRole('link', { name: 'Modifier' }).tap()
+    await page.getByLabel('Description').fill('Citron de Sicile')
+    await page.getByRole('button', { name: 'Enregistrer' }).tap()
+    await expect(page).toHaveURL(/\/admin$/)
+
+    await adminItem(page, 'Limonata').getByRole('link', { name: 'Supprimer' }).tap()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
+    await page.getByLabel('Je confirme la suppression').check()
+    await page.getByRole('button', { name: 'Supprimer définitivement' }).tap()
+    await expect(page).toHaveURL(/\/admin$/)
+    await expect(adminItem(page, 'Limonata')).toHaveCount(0)
+  })
 })

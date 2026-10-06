@@ -1,5 +1,7 @@
 import mysql from 'mysql2/promise'
 
+// The integration tests and the Playwright suite share this database and both reset it:
+// never run `npm run test:integration` and `npm run test:e2e` at the same time.
 export function testDatabaseUrl() {
   const url = process.env.DATABASE_URL_TEST
   if (!url) throw new Error('DATABASE_URL_TEST is required for integration tests (see .env.example)')

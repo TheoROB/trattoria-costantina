@@ -21,7 +21,8 @@ export default defineConfig({
     { name: 'admin', testMatch: 'e2e/admin/**/*.spec.ts', dependencies: ['chromium'], workers: 1, use: { ...devices['Desktop Chrome'] } },
     { name: 'security', testMatch: 'security/**/*.spec.ts', dependencies: ['admin'], workers: 1, use: { ...devices['Desktop Chrome'] } },
   ],
-  // Runs against the production build: `npm run build` first.
+  // Runs against the production build: `npm run build` first. Shares the *_test database with
+  // `npm run test:integration` (both reset it): never run the two at the same time.
   webServer: [
     {
       // Server output is kept for the "no secret in logs" checks.
