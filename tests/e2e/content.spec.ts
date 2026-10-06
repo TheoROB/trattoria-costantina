@@ -10,8 +10,6 @@ const PLACEHOLDERS = [
   '© 2024',
 ]
 
-const CONTACT_PLACEHOLDERS = ['42 58 73 21', 'bonjour@trattoria-costantina.fr']
-
 const SECTION_IMAGES = '#navbar img, #hero img, #histoire img, .section-famille img, #trouver img, .footer img'
 
 function collectErrors(page: Page) {
@@ -23,15 +21,9 @@ function collectErrors(page: Page) {
 
 test('home page contains no placeholder content', async ({ page, request }) => {
   const html = await (await request.get('/')).text()
-  for (const s of PLACEHOLDERS) {
-    if (!CONTACT_PLACEHOLDERS.includes(s)) expect(html, s).not.toContain(s)
-  }
-  // TODO(integration): #reservation (Reservation.tsx, another work package) still holds the
-  // mockup phone/email; check the full HTML once it uses lib/site.ts.
+  for (const s of PLACEHOLDERS) expect(html, s).not.toContain(s)
   await page.goto('/')
-  const rendered = await page
-    .locator('body > nav, body > section:not(#reservation), body > footer')
-    .evaluateAll((els) => els.map((e) => e.outerHTML).join('\n'))
+  const rendered = await page.locator('body').evaluate((el) => el.outerHTML)
   for (const s of PLACEHOLDERS) expect(rendered, s).not.toContain(s)
 })
 
@@ -104,7 +96,7 @@ for (const width of [375, 1280]) {
     }
     await page.waitForLoadState('networkidle')
     expect(sizes.length).toBeGreaterThan(0)
-    expect(sizes.filter((s) => !s.url.includes('/images/food-') && s.bytes > 400 * 1024)).toEqual([])
+    expect(sizes.filter((s) => s.bytes > 400 * 1024)).toEqual([])
   })
 }
 

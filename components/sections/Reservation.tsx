@@ -1,4 +1,5 @@
 import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
+import { site } from '@/lib/site'
 import { DishWidget } from './DishWidget'
 
 export function Reservation() {
@@ -16,15 +17,15 @@ export function Reservation() {
             <ul className="contact-info">
               <li>
                 <PinIcon />
-                <span>3 Rue Denis Papin, 62110 Hénin-Beaumont, France</span>
+                <span>{site.address.street}, {site.address.postalCode} {site.address.city}, {site.address.country}</span>
               </li>
               <li>
                 <PhoneIcon />
-                <a href="tel:+33978813295">09 78 81 32 95</a>
+                <a href={site.phone.href}>{site.phone.display}</a>
               </li>
               <li>
                 <MailIcon />
-                <a href="mailto:trattoria.costantina@gmail.com">trattoria.costantina@gmail.com</a>
+                <a href={site.email.href}>{site.email.display}</a>
               </li>
             </ul>
           </div>

@@ -1,4 +1,5 @@
 import { buildDishWidgetUrl } from '@/lib/dish'
+import { site } from '@/lib/site'
 
 export function DishWidget() {
   return (
@@ -12,7 +13,7 @@ export function DishWidget() {
       />
       <p className="dish-widget-fallback">
         Vous pouvez aussi réserver par téléphone au{' '}
-        <a href="tel:+33978813295">09 78 81 32 95</a>
+        <a href={site.phone.href}>{site.phone.display}</a>
       </p>
     </div>
   )

@@ -50,7 +50,7 @@
       "formats": ["avif", "webp"]
     },
     "logo": {
-      "source": "repo:public/images/logo.png",
+      "source": "repo:assets/logo.png",
       "widths": [160, 320, 480],
       "formats": ["webp", "png"]
     }

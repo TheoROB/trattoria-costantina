@@ -18,7 +18,7 @@ test('each request gets a fresh nonce', async ({ request }) => {
   expect(a).not.toBe(b)
 })
 
-for (const path of ['/', '/images/logo.png', '/fonts/does-not-exist.woff2']) {
+for (const path of ['/', '/images/logo/160.png', '/fonts/does-not-exist.woff2']) {
   test(`baseline hardening headers on ${path}`, async ({ request }) => {
     const h = (await request.get(path)).headers()
     expect(h['x-content-type-options']).toBe('nosniff')
