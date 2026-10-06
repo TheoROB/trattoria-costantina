@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=24.7.0 <25"
+    "node": ">=24.6.0 <25"
   },
   "scripts": {
     "dev": "next dev",
@@ -19,6 +19,7 @@
     "admin:user": "node --env-file-if-exists=.env.local scripts/admin-user.mts"
   },
   "dependencies": {
+    "@node-rs/argon2": "2.2.2",
     "mysql2": "3.24.5",
     "next": "16.3.8",
     "react": "19.3.0",

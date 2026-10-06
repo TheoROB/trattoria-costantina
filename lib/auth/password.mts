@@ -1,6 +1,8 @@
-// Argon2id password hashing with Node's built-in implementation (Node >= 24.7), PHC string format.
+// Argon2id password hashing with @node-rs/argon2 (prebuilt binaries; Hostinger runs Node 24.6, which
+// lacks node:crypto.argon2), PHC string format.
 // Plain .mts without `server-only` so that scripts/admin-user.mts can import it.
-import { argon2, randomBytes, timingSafeEqual } from 'node:crypto'
+import { randomBytes, timingSafeEqual } from 'node:crypto'
+import { hashRaw } from '@node-rs/argon2'
 
 // OWASP Password Storage Cheat Sheet, Argon2id minimum configuration.
 const PARAMS = { memory: 19456, passes: 2, parallelism: 1, tagLength: 32 }
@@ -10,12 +12,18 @@ const PHC = /^\$argon2id\$v=19\$m=(\d{1,6}),t=(\d{1,2}),p=(\d{1,2})\$([A-Za-z0-9
 // Upper bounds on parameters read back from the database, so a tampered hash cannot exhaust memory/CPU.
 const MAX = { memory: 65536, passes: 10, parallelism: 4 }
 
-function derive(password: string, nonce: Buffer, params: typeof PARAMS) {
-  return new Promise<Buffer>((resolve, reject) =>
-    argon2('argon2id', { message: password.normalize('NFC'), nonce, ...params }, (error, key) =>
-      error ? reject(error) : resolve(key),
-    ),
-  )
+// Algorithm.Argon2id is a const enum (not usable with isolatedModules): its value is 2.
+const ARGON2ID = 2
+
+function derive(password: string, salt: Buffer, params: typeof PARAMS) {
+  return hashRaw(password.normalize('NFC'), {
+    algorithm: ARGON2ID,
+    salt,
+    memoryCost: params.memory,
+    timeCost: params.passes,
+    parallelism: params.parallelism,
+    outputLen: params.tagLength,
+  })
 }
 
 const b64 = (buffer: Buffer) => buffer.toString('base64').replace(/=+$/, '')

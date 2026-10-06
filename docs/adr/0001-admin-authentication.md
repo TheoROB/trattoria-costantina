@@ -27,7 +27,7 @@ Candidates checked on 2026-10-06 (npm registry and official docs):
 
 About 250 lines of sensitive code in 4 small files, all unit- or integration-tested:
 
-- `lib/auth/password.mts`: Argon2id via `node:crypto.argon2` (built into Node ≥ 24.7, no native dependency), OWASP parameters (m=19 MiB, t=2, p=1), PHC string format, constant-time comparison.
+- `lib/auth/password.mts`: Argon2id via `@node-rs/argon2` (see amendment below), OWASP parameters (m=19 MiB, t=2, p=1, 32-byte output), PHC string format, constant-time comparison.
 - `lib/auth/session.ts`: 32-byte random token in cookie `__Host-tc_admin` (HttpOnly, Secure, SameSite=Strict, Path=/), only the SHA-256 stored in `admin_sessions`, 8 h absolute expiry checked in SQL, new token at every login, row deleted on logout.
 - `lib/auth/rate-limit.ts`: attempts stored in MariaDB (works with several processes and restarts), keyed by HMAC-SHA256 of the normalized email (and of the client IP only when a trusted proxy header is configured). 5 failures in 15 minutes lock the email temporarily. The response is the same generic message whether the email is unknown, the password wrong, or the account locked; a dummy Argon2 verification equalizes timing. Old rows are purged opportunistically.
 - `lib/auth/dal.ts` (`server-only`): `requireAdmin()` re-validates the session against the database and is called at the start of every protected page and every Server Action. `proxy.ts` makes no authorization decision.
@@ -38,10 +38,19 @@ Accounts: created or rotated with `scripts/admin-user.mts`. The script reads the
 
 ## Decision
 
-**B.** For exactly two credential accounts, the library does not remove the sensitive parts we need: lockout and Argon2id would still be custom. It adds an HTTP surface (reset/change password, session APIs) and a second schema/migration system, and it would need its own proxy and CSRF configuration. The custom code is smaller than the configuration and hardening the library needs. It uses only Node built-ins plus `mysql2` and `zod`, already in the stack, and an independent black-box security suite (`tests/security/**`) tests it.
+**B.** For exactly two credential accounts, the library does not remove the sensitive parts we need: lockout and Argon2id would still be custom. It adds an HTTP surface (reset/change password, session APIs) and a second schema/migration system, and it would need its own proxy and CSRF configuration. The custom code is smaller than the configuration and hardening the library needs. It uses Node built-ins, `@node-rs/argon2` for the hash (amendment below), and `mysql2` and `zod`, already in the stack, and an independent black-box security suite (`tests/security/**`) tests it.
 
 ## Consequences
 
 - We own the security of ~250 lines: they are kept small, have no feature growth beyond this ADR, and are covered by unit, integration and independent security tests.
 - Revisit if the scope grows (more users, roles, password reset by email, 2FA): then adopt a library rather than extend this code.
 - Production needs `AUTH_HMAC_SECRET` (≥ 32 random chars) and a stable `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (multi-process). Set `AUTH_TRUSTED_IP_HEADER` only once the Hostinger proxy header is verified by the probe.
+
+## Amendment 1 — Argon2 implementation (2026-10-06)
+
+The decision initially used `node:crypto.argon2` (Node ≥ 24.7). The Hostinger environment probe showed that production runs **Node v24.6.0**, where that API does not exist. Hashing now uses `@node-rs/argon2` 2.2.2:
+
+- Prebuilt binaries delivered as optional dependencies (`linux-x64-gnu` on Hostinger), no install script or compiler needed, like `sharp`.
+- Same parameters and format: Argon2id, m=19456, t=2, p=1, 32-byte output, 16-byte salt, the PHC string still built and parsed by our code, so the parameter caps on stored hashes are unchanged.
+- Verified on Hostinger by the probe: hash, verify, wrong password rejected, and a hash produced by the previous `node:crypto.argon2` implementation verified (also a unit test). Hash time there: about 18 ms.
+- `engines.node` is `>=24.6.0 <25`.
