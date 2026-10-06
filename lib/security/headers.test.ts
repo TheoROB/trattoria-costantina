@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildContentSecurityPolicy, staticSecurityHeaders } from './headers'
+import { adminHeaders, buildContentSecurityPolicy, staticSecurityHeaders } from './headers'
 
 const nonce = 'dGVzdC1ub25jZQ=='
 
@@ -68,5 +68,13 @@ describe('staticSecurityHeaders', () => {
     expect(h['Strict-Transport-Security']).toBe('max-age=31536000; includeSubDomains')
     expect(h['Permissions-Policy']).toContain('camera=()')
     expect(h['Permissions-Policy']).toContain('geolocation=()')
+  })
+})
+
+describe('adminHeaders', () => {
+  it('keeps admin pages out of search engines and caches', () => {
+    const h = Object.fromEntries(adminHeaders.map(({ key, value }) => [key, value]))
+    expect(h['X-Robots-Tag']).toBe('noindex, nofollow')
+    expect(h['Cache-Control']).toContain('no-store')
   })
 })

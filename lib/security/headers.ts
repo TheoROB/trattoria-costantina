@@ -33,3 +33,9 @@ export const staticSecurityHeaders = [
     value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
   },
 ]
+
+// /admin only (next.config.ts): never indexed, never stored by browsers or shared caches.
+export const adminHeaders = [
+  { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+  { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+]

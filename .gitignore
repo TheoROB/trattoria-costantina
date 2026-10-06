@@ -7,5 +7,6 @@ next-env.d.ts
 !.env.example
 test-results/
 playwright-report/
+.e2e-logs/
 .superpowers/
 .DS_Store

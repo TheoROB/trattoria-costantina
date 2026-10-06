@@ -15,13 +15,15 @@
     "test:e2e": "playwright test",
     "test:integration": "node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --project integration",
     "db:up": "docker compose up -d db",
-    "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.mts"
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.mts",
+    "admin:user": "node --env-file-if-exists=.env.local scripts/admin-user.mts"
   },
   "dependencies": {
     "mysql2": "3.24.5",
     "next": "16.3.8",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
