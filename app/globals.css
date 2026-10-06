@@ -889,3 +889,19 @@ select:focus { border-color: var(--terracotta); }
 
   .section-famille { height: 480px; }
 }
+
+/* ===========================
+   RESPONSIVE IMAGES & LEGAL PAGE
+   =========================== */
+/* <picture> wrappers must not affect layout: existing `... img` rules still apply. */
+picture { display: contents; }
+picture > source { display: none; }
+
+.legal-page {
+  padding-top: calc(var(--nav-height) + 4rem);
+  padding-bottom: 5rem;
+}
+.legal-page h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+.legal-page li { color: var(--brown-light); margin-bottom: 0.4rem; }
+.legal-page strong { font-weight: 500; color: var(--brown); }
+.legal-page a { text-decoration: underline; }

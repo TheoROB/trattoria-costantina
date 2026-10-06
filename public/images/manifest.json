@@ -1,0 +1,166 @@
+{
+  "hero": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "width": 2560,
+        "height": 1440
+      }
+    ]
+  },
+  "hero-portrait": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 640,
+        "height": 800
+      },
+      {
+        "width": 960,
+        "height": 1200
+      },
+      {
+        "width": 1280,
+        "height": 1600
+      }
+    ]
+  },
+  "histoire": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 560,
+        "height": 700
+      },
+      {
+        "width": 1080,
+        "height": 1350
+      }
+    ]
+  },
+  "histoire-wide": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 640,
+        "height": 360
+      },
+      {
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "width": 1680,
+        "height": 945
+      }
+    ]
+  },
+  "famille": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 1280,
+        "height": 549
+      },
+      {
+        "width": 1920,
+        "height": 823
+      },
+      {
+        "width": 2560,
+        "height": 1097
+      }
+    ]
+  },
+  "famille-portrait": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 640,
+        "height": 800
+      },
+      {
+        "width": 960,
+        "height": 1200
+      }
+    ]
+  },
+  "trouver-facade": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 300
+      },
+      {
+        "width": 800,
+        "height": 600
+      }
+    ]
+  },
+  "trouver-terrasse": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 300
+      },
+      {
+        "width": 800,
+        "height": 600
+      }
+    ]
+  },
+  "logo": {
+    "formats": [
+      "webp",
+      "png"
+    ],
+    "variants": [
+      {
+        "width": 160,
+        "height": 113
+      },
+      {
+        "width": 320,
+        "height": 226
+      },
+      {
+        "width": 480,
+        "height": 339
+      }
+    ]
+  }
+}
