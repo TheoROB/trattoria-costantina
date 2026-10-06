@@ -109,41 +109,52 @@ function multipartFieldNames(source: string) {
   return [...source.matchAll(/Content-Disposition: form-data; name="([^"]+)"/g)].map((match) => match[1])
 }
 
+function insertMultipartFieldBeforeRoot(source: string, boundary: string, name: string, value: string) {
+  const field = `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`
+  const rootHeader = 'Content-Disposition: form-data; name="0"'
+  const rootHeaderIndex = source.indexOf(rootHeader)
+  if (rootHeaderIndex === -1) throw new Error('Missing React Server Action root part')
+  const rootPartIndex = source.lastIndexOf(`--${boundary}`, rootHeaderIndex)
+  if (rootPartIndex === -1) throw new Error('Malformed React Server Action root part')
+  return Buffer.from(`${source.slice(0, rootPartIndex)}${field}${source.slice(rootPartIndex)}`)
+}
+
 export function appendActionField(action: CapturedAction, name: string, value: string) {
   const contentType = action.headers['content-type'] ?? ''
   if (contentType.includes('application/x-www-form-urlencoded')) {
     const params = new URLSearchParams(action.body.toString())
-    params.append(`${encodedFieldPrefix([...params.keys()])}${name}`, value)
-    return Buffer.from(params.toString())
+    const reordered = new URLSearchParams()
+    reordered.append(`${encodedFieldPrefix([...params.keys()])}${name}`, value)
+    for (const [key, entryValue] of params) reordered.append(key, entryValue)
+    return Buffer.from(reordered.toString())
   }
 
   const boundary = multipartBoundary(contentType)
   if (!boundary) throw new Error(`Unsupported Server Action content type: ${contentType}`)
-  const ending = `--${boundary}--`
   const source = action.body.toString('utf8')
   const encodedName = `${encodedFieldPrefix(multipartFieldNames(source))}${name}`
-  const field = `--${boundary}\r\nContent-Disposition: form-data; name="${encodedName}"\r\n\r\n${value}\r\n`
-  if (!source.includes(ending)) throw new Error('Malformed multipart Server Action body')
-  return Buffer.from(source.replace(ending, `${field}${ending}`))
+  return insertMultipartFieldBeforeRoot(source, boundary, encodedName, value)
 }
 
 export function replaceActionField(action: CapturedAction, name: string, value: string) {
   const contentType = action.headers['content-type'] ?? ''
   if (contentType.includes('application/x-www-form-urlencoded')) {
     const params = new URLSearchParams(action.body.toString())
-    params.set(encodedFieldName([...params.keys()], name), value)
-    return Buffer.from(params.toString())
+    const resolvedName = encodedFieldName([...params.keys()], name)
+    const reordered = new URLSearchParams()
+    reordered.append(resolvedName, value)
+    for (const [key, entryValue] of params) {
+      if (key !== resolvedName) reordered.append(key, entryValue)
+    }
+    return Buffer.from(reordered.toString())
   }
 
   const boundary = multipartBoundary(contentType)
   if (!boundary) throw new Error(`Unsupported Server Action content type: ${contentType}`)
   const source = action.body.toString('utf8')
   const resolvedName = encodedFieldName(multipartFieldNames(source), name)
-  const escapedName = resolvedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const fieldPattern = new RegExp(
-    `(Content-Disposition: form-data; name="${escapedName}"(?:;[^\\r\\n]*)?\\r\\n(?:Content-Type:[^\\r\\n]+\\r\\n)?\\r\\n)([\\s\\S]*?)(?=\\r\\n--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
-  )
-  return Buffer.from(source.replace(fieldPattern, `$1${value}`))
+  const withoutField = removeActionField(action, name)
+  return insertMultipartFieldBeforeRoot(withoutField.toString('utf8'), boundary, resolvedName, value)
 }
 
 export function removeActionField(action: CapturedAction, name: string) {

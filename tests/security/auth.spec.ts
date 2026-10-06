@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import type { RowDataPacket } from 'mysql2/promise'
 import { captureAction, formFieldName, replaceActionField, replayAction } from './helpers/actions'
 import { expectLoginFailure, login, logout, sessionToken } from './helpers/admin'
@@ -15,6 +15,22 @@ import {
   query,
   sessionCount,
 } from './helpers/db'
+
+function secureCookieUrl(baseURL: string) {
+  const url = new URL(baseURL)
+  url.protocol = 'https:'
+  return url.toString()
+}
+
+async function gotoAdminAndExpectCookie(page: Page, token: string) {
+  const requestPromise = page.waitForRequest((request) => {
+    const url = new URL(request.url())
+    return request.isNavigationRequest() && url.pathname === '/admin'
+  })
+  await page.goto('/admin')
+  const request = await requestPromise
+  expect((await request.allHeaders()).cookie).toContain(`${SESSION_COOKIE}=${token}`)
+}
 
 test.afterEach(async () => {
   await deleteSecurityData()
@@ -81,14 +97,14 @@ test('a random forged session cookie is refused', async ({ context, page, baseUR
     {
       name: SESSION_COOKIE,
       value: 'forged-random-session-token',
-      url: baseURL,
+      url: secureCookieUrl(baseURL),
       secure: true,
       httpOnly: true,
       sameSite: 'Strict',
     },
   ])
 
-  await page.goto('/admin')
+  await gotoAdminAndExpectCookie(page, 'forged-random-session-token')
 
   await expect(page).toHaveURL(/\/admin\/login$/)
 })
@@ -153,8 +169,10 @@ test('logout deletes the server session and the old cookie is refused', async ({
 
   expect(await sessionCount(ADMIN_USERS.julien.email)).toBe(0)
   expect((await context.cookies()).some(({ name }) => name === SESSION_COOKIE)).toBe(false)
-  await context.addCookies([{ name: SESSION_COOKIE, value: oldToken, url: baseURL, secure: true }])
-  await page.goto('/admin')
+  await context.addCookies([
+    { name: SESSION_COOKIE, value: oldToken, url: secureCookieUrl(baseURL), secure: true },
+  ])
+  await gotoAdminAndExpectCookie(page, oldToken)
   await expect(page).toHaveURL(/\/admin\/login$/)
 })
 

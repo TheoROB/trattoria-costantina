@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import { expect, request as playwrightRequest, test } from '@playwright/test'
+import { expect, request as playwrightRequest, test, type Page } from '@playwright/test'
 import type { RowDataPacket } from 'mysql2/promise'
 import { login, sessionToken } from './helpers/admin'
 import { ADMIN_USERS, SESSION_COOKIE } from './helpers/credentials'
@@ -21,6 +21,15 @@ function expectAdminHeaders(headers: Record<string, string>) {
   expect(csp).toContain("frame-ancestors 'none'")
 }
 
+async function expectRobotsMeta(page: Page) {
+  const contents = await page.locator('meta[name="robots"]').evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute('content') ?? ''),
+  )
+  expect(contents.length).toBeGreaterThan(0)
+  expect(contents.every((content) => content.includes('noindex'))).toBe(true)
+  expect(contents).toContain('noindex, nofollow')
+}
+
 test.afterEach(async () => {
   await execute('DELETE FROM admin_audit_log')
   await execute('DELETE FROM admin_sessions')
@@ -32,7 +41,7 @@ test('login page is noindex, no-store and preserves all baseline security header
   if (!response) throw new Error('Missing document response')
 
   expectAdminHeaders(response.headers())
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+  await expectRobotsMeta(page)
 })
 
 test('all authenticated admin pages are noindex, no-store and preserve baseline security headers', async ({ page }) => {
@@ -46,7 +55,7 @@ test('all authenticated admin pages are noindex, no-store and preserve baseline 
     const response = await page.goto(path)
     if (!response) throw new Error(`Missing document response for ${path}`)
     expectAdminHeaders(response.headers())
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+    await expectRobotsMeta(page)
     const nonce = response.headers()['content-security-policy'].match(/'nonce-([^']+)'/)?.[1]
     expect(nonce).toBeTruthy()
     nonces.push(nonce ?? '')
@@ -85,19 +94,22 @@ test('admin HTML, RSC responses and server logs never expose credentials or secr
   baseURL,
 }) => {
   if (!baseURL) throw new Error('Playwright baseURL is required')
-  const responseBodies: Promise<string>[] = []
-  page.on('response', (response) => {
-    const contentType = response.headers()['content-type'] ?? ''
-    if (contentType.includes('text/') || contentType.includes('application/json')) {
-      responseBodies.push(response.text().catch(() => ''))
-    }
-  })
+  const responseBodies: string[] = []
 
-  await page.goto('/admin/login')
+  const loginDocument = await page.goto('/admin/login')
+  if (!loginDocument) throw new Error('Missing login document response')
+  responseBodies.push(await loginDocument.text())
+  const loginActionPromise = page.waitForResponse(
+    (response) => response.request().method() === 'POST' && Boolean(response.request().headers()['next-action']),
+  )
   await login(page)
+  responseBodies.push(await (await loginActionPromise).text())
   const token = await sessionToken(context)
-  await page.goto('/admin/menu/new')
-  await page.goto('/admin')
+  for (const path of ['/admin/menu/new', '/admin']) {
+    const response = await page.goto(path)
+    if (!response) throw new Error(`Missing document response for ${path}`)
+    responseBodies.push(await response.text())
+  }
 
   const api = await playwrightRequest.newContext({
     baseURL,
@@ -105,13 +117,13 @@ test('admin HTML, RSC responses and server logs never expose credentials or secr
   })
   const adminResponse = await api.get('/admin')
   const formResponse = await api.get('/admin/menu/new')
-  responseBodies.push(Promise.resolve(await adminResponse.text()))
-  responseBodies.push(Promise.resolve(await formResponse.text()))
+  responseBodies.push(await adminResponse.text())
+  responseBodies.push(await formResponse.text())
   await api.dispose()
 
   const logPath = '.e2e-logs/server.log'
   expect(fs.existsSync(logPath)).toBe(true)
-  const inspected = `${(await Promise.all(responseBodies)).join('\n')}\n${fs.readFileSync(logPath, 'utf8')}`
+  const inspected = `${responseBodies.join('\n')}\n${fs.readFileSync(logPath, 'utf8')}`
   const forbidden = [
     ADMIN_USERS.julien.password,
     ADMIN_USERS.theo.password,

@@ -19,8 +19,12 @@ export async function expectLoginFailure(page: Page, email: string, password: st
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Mot de passe').fill(password)
   await page.getByRole('button', { name: 'Se connecter' }).click()
-  await expect(page.getByRole('alert')).toHaveText(GENERIC_LOGIN_ERROR)
+  await expect(applicationAlert(page)).toHaveText(GENERIC_LOGIN_ERROR)
   await expect(page).toHaveURL(/\/admin\/login$/)
+}
+
+export function applicationAlert(page: Page) {
+  return page.getByRole('alert').filter({ hasText: /\S/ })
 }
 
 export async function sessionToken(context: BrowserContext) {

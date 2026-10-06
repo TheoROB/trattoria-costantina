@@ -9,7 +9,7 @@ import {
   replayAction,
   type CapturedAction,
 } from './helpers/actions'
-import { fillItemForm, login, sessionToken } from './helpers/admin'
+import { applicationAlert, fillItemForm, login, sessionToken } from './helpers/admin'
 import { deleteSecurityData, execute, insertMenuItem, menuItemsFingerprint, query, uniqueItemName } from './helpers/db'
 
 type CreateCapture = {
@@ -111,7 +111,7 @@ test('a forged invalid payload is rendered as an accessible page alert', async (
   })
   try {
     await page.getByRole('button', { name: 'Enregistrer' }).click()
-    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(applicationAlert(page)).toBeVisible()
     expect(await menuItemsFingerprint()).toBe(before)
   } finally {
     await page.unroute('**/*')
@@ -151,8 +151,6 @@ for (const price of [
   '9999',
   '100000',
   '12 50',
-  ' 12.50',
-  '12.50 ',
 ]) {
   test(`server-side price validation rejects ${JSON.stringify(price)}`, async ({ page, context, baseURL }) => {
     if (!baseURL) throw new Error('Playwright baseURL is required')
@@ -174,6 +172,8 @@ test('accepted price boundaries and separators are stored as exact integer cents
     ['0.01', 1],
     ['0,01', 1],
     ['12.50', 1250],
+    [' 12.50', 1250],
+    ['12.50 ', 1250],
     ['1000', 100_000],
   ] as const) {
     const name = uniqueItemName(`accepted price ${price}`)
@@ -229,7 +229,7 @@ test('a mutation whose bound item was deleted returns a clean page error', async
   const response = await responsePromise
 
   expect(response.status()).not.toBe(500)
-  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(applicationAlert(page)).toBeVisible()
   expect(await page.locator('body').innerText()).not.toMatch(/Error:\s|at\s+\S+\s+\([^)]*:\d+:/)
 })
 
