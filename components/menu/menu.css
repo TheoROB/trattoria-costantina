@@ -1,0 +1,38 @@
+/* Menu additions on top of the mockup styles (.menu-grid, .menu-category, .menu-items). */
+.menu-items li.is-unavailable .menu-name,
+.menu-items li.is-unavailable .menu-price { opacity: 0.55; }
+
+.menu-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--cream-border);
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brown-light);
+  vertical-align: middle;
+}
+
+.menu-status { text-align: center; margin: 0 auto 2rem; }
+
+.page-banner {
+  background: var(--brown);
+  color: var(--cream);
+  padding: calc(var(--nav-height) + 4rem) 0 4rem;
+  text-align: center;
+}
+.page-banner h1 { color: var(--cream); }
+.page-banner .section-subtitle { color: rgba(250, 246, 240, 0.75); }
+
+/* /carte uses h2 for categories (h1 is the page title); same look as the home h3. */
+.section-carte-full .menu-category h2 {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 400;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cream-border);
+}
