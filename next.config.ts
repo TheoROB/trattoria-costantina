@@ -1,10 +1,13 @@
 import type { NextConfig } from 'next'
-import { staticSecurityHeaders } from './lib/security/headers'
+import { adminHeaders, staticSecurityHeaders } from './lib/security/headers'
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{ source: '/:path*', headers: staticSecurityHeaders }]
+    return [
+      { source: '/:path*', headers: staticSecurityHeaders },
+      { source: '/admin/:path*', headers: adminHeaders },
+    ]
   },
 }
 

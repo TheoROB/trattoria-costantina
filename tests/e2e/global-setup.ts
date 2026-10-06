@@ -1,7 +1,9 @@
+import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import mysql from 'mysql2/promise'
 import { runMigrations } from '../../lib/db-migrations.mts'
 import { resetDatabase, testDatabaseUrl } from '../integration/db-helpers'
+import { ADMINS } from './admin/credentials'
 
 // Test-only fixtures: written to the *_test database, never shipped.
 export const E2E_MENU = [
@@ -31,4 +33,12 @@ export default async function globalSetup() {
     ])
   }
   await conn.end()
+  // Through the real CLI: password on stdin.
+  for (const { email, password } of Object.values(ADMINS)) {
+    execFileSync(process.execPath, ['scripts/admin-user.mts', 'set', '--email', email], {
+      input: password,
+      env: { PATH: process.env.PATH, DATABASE_URL: url, NODE_ENV: 'test' },
+      stdio: ['pipe', 'ignore', 'inherit'],
+    })
+  }
 }

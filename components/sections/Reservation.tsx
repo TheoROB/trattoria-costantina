@@ -13,6 +13,7 @@ export function Reservation() {
               Réservation
             </p>
             <h2>Réservez<br />Votre Table</h2>
+            {/* TODO(lot-f): unsourced claims ("importés directement d'Italie", "expérience gastronomique inoubliable"); replace with client-validated text. */}
             <p>Laissez-vous enivrer par une cuisine italienne authentique dans un cadre chaleureux et raffiné. Notre chef prépare chaque plat avec des ingrédients frais, importés directement d&apos;Italie, pour une expérience gastronomique inoubliable.</p>
             <ul className="contact-info">
               <li>
