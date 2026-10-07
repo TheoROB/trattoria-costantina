@@ -63,6 +63,7 @@ export default async function AdminMenuPage({ searchParams }: { searchParams: Pr
                     <span>Position {index + 1}</span>
                     {!item.isVisible && <span className="admin-badge">Masqué</span>}
                     {!item.isAvailable && <span className="admin-badge">Indisponible</span>}
+                    {item.imageKey && <span className="admin-badge">Photo</span>}
                   </div>
                   <div className="admin-item-actions">
                     <ItemButton action={moveItem} itemId={item.id} fields={{ direction: 'up' }} label="Monter" disabled={index === 0} />

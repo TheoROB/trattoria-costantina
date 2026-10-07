@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
+import { E2E_MEDIA_ROOT } from './tests/e2e/media-root'
 
 if (fs.existsSync('.env.local')) process.loadEnvFile('.env.local')
 
@@ -29,7 +30,7 @@ export default defineConfig({
       command: `mkdir -p .e2e-logs && npm run start -- -p ${PORT} >> .e2e-logs/server.log 2>&1`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: !process.env.CI,
-      env: { DATABASE_URL: process.env.DATABASE_URL_TEST ?? '', AUTH_HMAC_SECRET: E2E_AUTH_HMAC_SECRET },
+      env: { DATABASE_URL: process.env.DATABASE_URL_TEST ?? '', AUTH_HMAC_SECRET: E2E_AUTH_HMAC_SECRET, MEDIA_ROOT: E2E_MEDIA_ROOT },
     },
     {
       command: `npm run start -- -p ${DB_DOWN_PORT}`,

@@ -16,6 +16,16 @@
   vertical-align: middle;
 }
 
+.menu-thumb {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--cream-border);
+}
+.menu-thumb + .menu-item-info { flex: 1; }
+
 .menu-status { text-align: center; margin: 0 auto 2rem; }
 
 .page-banner {

@@ -1,3 +1,4 @@
+import { variantUrl } from '@/lib/media/storage'
 import { formatPrice } from '@/lib/menu/format'
 import type { MenuCategoryGroup } from '@/lib/menu/menu'
 import './menu.css'
@@ -12,6 +13,20 @@ export function MenuCategories({ categories, headingLevel }: { categories: MenuC
           <ul className="menu-items">
             {category.items.map((item) => (
               <li key={item.id} className={item.isAvailable ? undefined : 'is-unavailable'}>
+                {item.imageKey && (
+                  // Decorative: the dish name is right next to it.
+                  <img
+                    className="menu-thumb"
+                    src={variantUrl(item.imageKey, 160)}
+                    srcSet={`${variantUrl(item.imageKey, 160)} 160w, ${variantUrl(item.imageKey, 320)} 320w`}
+                    sizes="64px"
+                    width={64}
+                    height={64}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
                 <div className="menu-item-info">
                   <span className="menu-name">
                     {item.name}

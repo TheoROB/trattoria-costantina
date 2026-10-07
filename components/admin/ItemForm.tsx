@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState } from 'react'
-import type { ItemFormState } from '@/app/admin/menu-actions'
+import { useActionState, type ChangeEvent } from 'react'
+import type { FormFieldName as FieldName, ItemFormState } from '@/app/admin/menu-actions'
 import type { AdminMenuItem } from '@/lib/menu/admin'
-import type { FieldName } from '@/lib/menu/admin-input'
+import { MAX_UPLOAD_BYTES, PHOTO_ACCEPT } from '@/lib/media/limits'
 import { MENU_CATEGORIES } from '@/lib/menu/categories'
 import { centsToInput } from '@/lib/menu/price'
 
@@ -16,6 +16,14 @@ type Props = {
 function FieldError({ field, errors }: { field: FieldName; errors?: ItemFormState['fieldErrors'] }) {
   const message = errors?.[field]
   return message ? <p className="admin-field-error" id={`item-${field}-error`}>{message}</p> : null
+}
+
+// Checked again on the server; here it only avoids sending a file the server would refuse.
+function checkPhotoSize(event: ChangeEvent<HTMLInputElement>) {
+  const input = event.currentTarget
+  const file = input.files?.[0]
+  input.setCustomValidity(file && file.size > MAX_UPLOAD_BYTES ? 'La photo dépasse 10 Mo : choisissez une image plus légère.' : '')
+  input.reportValidity()
 }
 
 export function ItemForm({ action, item }: Props) {
@@ -57,6 +65,14 @@ export function ItemForm({ action, item }: Props) {
         <input id="item-price" type="text" name="price" inputMode="decimal" required placeholder="12,50" maxLength={16}
           defaultValue={sent?.price ?? (item ? centsToInput(item.priceCents) : '')} {...describe('price')} />
         <FieldError field="price" errors={errors} />
+      </div>
+
+      <div className="admin-field">
+        <label htmlFor="item-photo">{item?.imageKey ? 'Remplacer la photo' : 'Photo'} (facultatif)</label>
+        <input id="item-photo" type="file" name="photo" accept={PHOTO_ACCEPT} onChange={checkPhotoSize}
+          aria-describedby={errors?.photo ? 'item-photo-error item-photo-hint' : 'item-photo-hint'} aria-invalid={errors?.photo ? true : undefined} />
+        <p className="admin-hint" id="item-photo-hint">JPEG, PNG ou WebP, 10 Mo maximum, au moins 320 × 320 pixels. La photo est recadrée en carré.</p>
+        <FieldError field="photo" errors={errors} />
       </div>
 
       <label className="admin-check">

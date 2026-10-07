@@ -75,7 +75,7 @@ describe('admin menu', () => {
     const result = await menu.updateMenuItem(pool, theo, a.id, input({
       name: 'A2', categoryKey: 'desserts', description: null, priceCents: 990, isAvailable: false, isVisible: false,
     }))
-    expect(result).toBe('ok')
+    expect(result).toEqual({ status: 'ok', removedImageKey: null })
     expect(await menu.getAdminMenuItem(pool, a.id)).toMatchObject({
       name: 'A2', categoryKey: 'desserts', description: null, priceCents: 990, isAvailable: false, isVisible: false, position: 1,
     })
@@ -94,8 +94,8 @@ describe('admin menu', () => {
 
   it('two admins editing successively: last write wins, no error', async () => {
     const a = await menu.createMenuItem(pool, julien, input())
-    expect(await menu.updateMenuItem(pool, julien, a.id, input({ priceCents: 1200 }))).toBe('ok')
-    expect(await menu.updateMenuItem(pool, theo, a.id, input({ priceCents: 1300 }))).toBe('ok')
+    expect(await menu.updateMenuItem(pool, julien, a.id, input({ priceCents: 1200 }))).toMatchObject({ status: 'ok' })
+    expect(await menu.updateMenuItem(pool, theo, a.id, input({ priceCents: 1300 }))).toMatchObject({ status: 'ok' })
     expect((await menu.getAdminMenuItem(pool, a.id))?.priceCents).toBe(1300)
   })
 
@@ -103,7 +103,7 @@ describe('admin menu', () => {
     await menu.createMenuItem(pool, julien, input({ name: 'A' }))
     const b = await menu.createMenuItem(pool, julien, input({ name: 'B' }))
     await menu.createMenuItem(pool, julien, input({ name: 'C' }))
-    expect(await menu.deleteMenuItem(pool, theo, b.id)).toBe('ok')
+    expect(await menu.deleteMenuItem(pool, theo, b.id)).toMatchObject({ status: 'ok' })
     expect(await names('pizzas')).toEqual(['0:A', '1:C'])
     expect((await audit()).at(-1)).toEqual({ admin_user_id: theo, action: 'menu_item.delete', menu_item_id: b.id, menu_item_name: 'B' })
   })
@@ -112,8 +112,8 @@ describe('admin menu', () => {
     const a = await menu.createMenuItem(pool, julien, input())
     await menu.deleteMenuItem(pool, julien, a.id)
     const before = (await audit()).length
-    expect(await menu.updateMenuItem(pool, theo, a.id, input())).toBe('not_found')
-    expect(await menu.deleteMenuItem(pool, theo, a.id)).toBe('not_found')
+    expect(await menu.updateMenuItem(pool, theo, a.id, input())).toEqual({ status: 'not_found' })
+    expect(await menu.deleteMenuItem(pool, theo, a.id)).toEqual({ status: 'not_found' })
     expect(await menu.setMenuItemFlag(pool, theo, a.id, 'visible', false)).toBe('not_found')
     expect(await menu.moveMenuItem(pool, theo, a.id, 'up')).toBe('not_found')
     expect(await menu.getAdminMenuItem(pool, 999999)).toBeNull()

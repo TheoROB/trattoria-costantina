@@ -9,7 +9,7 @@ export type PublicMenu = { status: 'ok'; categories: MenuCategoryGroup[] } | { s
 export async function readPublicMenu(pool: mysql.Pool): Promise<PublicMenu> {
   try {
     const [rows] = await pool.query<mysql.RowDataPacket[]>(
-      `SELECT id, category_key, name, description, price_cents, is_available
+      `SELECT id, category_key, name, description, price_cents, image_key, is_available
          FROM menu_items
         WHERE is_visible = 1
         ORDER BY position, id`,
@@ -22,6 +22,7 @@ export async function readPublicMenu(pool: mysql.Pool): Promise<PublicMenu> {
         name: r.name,
         description: r.description,
         priceCents: r.price_cents,
+        imageKey: r.image_key,
         isAvailable: r.is_available === 1,
       }))
     return { status: 'ok', categories: groupByCategory(items) }

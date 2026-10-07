@@ -6,6 +6,7 @@ export type PublicMenuItem = {
   name: string
   description: string | null
   priceCents: number
+  imageKey: string | null
   isAvailable: boolean
 }
 

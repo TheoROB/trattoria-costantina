@@ -8,6 +8,7 @@ const item = (over: Partial<PublicMenuItem> & Pick<PublicMenuItem, 'categoryKey'
   name: 'Item',
   description: null,
   priceCents: 1000,
+  imageKey: null,
   isAvailable: true,
   ...over,
 })

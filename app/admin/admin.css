@@ -65,6 +65,10 @@
 .admin-form textarea { resize: vertical; }
 .admin-field-price input { max-width: 12rem; }
 .admin-field-error { color: #7a2216; font-size: 0.85rem; }
+.admin-hint { color: var(--brown-light); font-size: 0.85rem; }
+.admin-form input[type="file"] { padding: 0.5rem; }
+.admin-photo { display: grid; gap: 0.75rem; justify-items: start; margin-bottom: 1.5rem; }
+.admin-photo img { width: 160px; height: 160px; border-radius: 8px; object-fit: cover; }
 .admin-check { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; font-size: 1rem; }
 .admin-check input { width: 1.25rem; height: 1.25rem; accent-color: var(--terracotta); }
 .admin-form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }

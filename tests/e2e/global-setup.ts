@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process'
+import fs from 'node:fs'
 import path from 'node:path'
 import mysql from 'mysql2/promise'
 import { runMigrations } from '../../lib/db-migrations.mts'
 import { resetDatabase, testDatabaseUrl } from '../integration/db-helpers'
 import { ADMINS } from './admin/credentials'
+import { E2E_MEDIA_ROOT } from './media-root'
 
 // Test-only fixtures: written to the *_test database, never shipped.
 export const E2E_MENU = [
@@ -25,6 +27,7 @@ export const E2E_MENU = [
 export default async function globalSetup() {
   const url = testDatabaseUrl()
   await resetDatabase(url)
+  fs.rmSync(E2E_MEDIA_ROOT, { recursive: true, force: true })
   await runMigrations(url, path.resolve('db/migrations'))
   const conn = await mysql.createConnection(url)
   for (const [category_key, name, price_cents, is_available, is_visible, position] of E2E_MENU) {

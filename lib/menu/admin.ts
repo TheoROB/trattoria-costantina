@@ -3,9 +3,11 @@ import type mysql from 'mysql2/promise'
 import { MENU_CATEGORIES, isMenuCategoryKey, type MenuCategoryKey } from './categories'
 import type { MenuItemInput } from './admin-input'
 
-export type AdminMenuItem = MenuItemInput & { id: number; position: number }
+export type AdminMenuItem = MenuItemInput & { id: number; position: number; imageKey: string | null }
 export type AdminMenuCategory = { key: MenuCategoryKey; label: string; items: AdminMenuItem[] }
 export type MutationResult = 'ok' | 'not_found'
+// removedImageKey: photo no longer referenced once the transaction has committed (its files can go).
+export type PhotoMutationResult = { status: 'not_found' } | { status: 'ok'; removedImageKey: string | null }
 export type AuditAction =
   | 'menu_item.create'
   | 'menu_item.update'
@@ -13,8 +15,11 @@ export type AuditAction =
   | 'menu_item.set_available'
   | 'menu_item.set_visible'
   | 'menu_item.move'
+  | 'menu_item.photo_add'
+  | 'menu_item.photo_replace'
+  | 'menu_item.photo_delete'
 
-const COLUMNS = 'id, category_key, name, description, price_cents, is_available, is_visible, position'
+const COLUMNS = 'id, category_key, name, description, price_cents, image_key, is_available, is_visible, position'
 
 function toItem(row: mysql.RowDataPacket): AdminMenuItem {
   return {
@@ -23,6 +28,7 @@ function toItem(row: mysql.RowDataPacket): AdminMenuItem {
     name: row.name,
     description: row.description,
     priceCents: row.price_cents,
+    imageKey: row.image_key,
     isAvailable: row.is_available === 1,
     isVisible: row.is_visible === 1,
     position: row.position,
@@ -101,22 +107,38 @@ const fields = (input: MenuItemInput) => ({
   is_visible: input.isVisible ? 1 : 0,
 })
 
-export function createMenuItem(pool: mysql.Pool, adminUserId: number, input: MenuItemInput) {
+// The photo files must already be written: the key is only referenced once they exist.
+export function createMenuItem(pool: mysql.Pool, adminUserId: number, input: MenuItemInput, imageKey: string | null = null) {
   return withTransaction(pool, async (conn) => {
     const rows = await lockCategory(conn, input.categoryKey)
     const [result] = await conn.query<mysql.ResultSetHeader>('INSERT INTO menu_items SET ?', [
-      { ...fields(input), position: rows.length },
+      { ...fields(input), image_key: imageKey, position: rows.length },
     ])
     await writePositions(conn, rows, rows.map((r) => r.id))
-    await writeAudit(conn, { adminUserId, action: 'menu_item.create', menuItemId: result.insertId, menuItemName: input.name })
+    const audit = { adminUserId, menuItemId: result.insertId, menuItemName: input.name }
+    await writeAudit(conn, { ...audit, action: 'menu_item.create' })
+    if (imageKey) await writeAudit(conn, { ...audit, action: 'menu_item.photo_add' })
     return { id: result.insertId }
   })
 }
 
-export function updateMenuItem(pool: mysql.Pool, adminUserId: number, id: number, input: MenuItemInput): Promise<MutationResult> {
+async function setPhoto(conn: mysql.PoolConnection, adminUserId: number, item: AdminMenuItem, name: string, imageKey: string | null) {
+  await conn.query('UPDATE menu_items SET image_key = ? WHERE id = ?', [imageKey, item.id])
+  const action = !imageKey ? 'menu_item.photo_delete' : item.imageKey ? 'menu_item.photo_replace' : 'menu_item.photo_add'
+  await writeAudit(conn, { adminUserId, action, menuItemId: item.id, menuItemName: name })
+}
+
+// imageKey: new photo (files already written) replacing the current one, or null to keep the current one.
+export function updateMenuItem(
+  pool: mysql.Pool,
+  adminUserId: number,
+  id: number,
+  input: MenuItemInput,
+  imageKey: string | null = null,
+): Promise<PhotoMutationResult> {
   return withTransaction(pool, async (conn) => {
     const item = await lockItem(conn, id)
-    if (!item) return 'not_found'
+    if (!item) return { status: 'not_found' }
     if (item.categoryKey === input.categoryKey) {
       await conn.query('UPDATE menu_items SET ? WHERE id = ?', [fields(input), id])
     } else {
@@ -127,20 +149,37 @@ export function updateMenuItem(pool: mysql.Pool, adminUserId: number, id: number
       await writePositions(conn, target, target.map((r) => r.id))
     }
     await writeAudit(conn, { adminUserId, action: 'menu_item.update', menuItemId: id, menuItemName: input.name })
-    return 'ok'
+    if (!imageKey) return { status: 'ok', removedImageKey: null }
+    await setPhoto(conn, adminUserId, item, input.name, imageKey)
+    return { status: 'ok', removedImageKey: item.imageKey }
   })
 }
 
-export function deleteMenuItem(pool: mysql.Pool, adminUserId: number, id: number): Promise<MutationResult> {
+export function removeMenuItemPhoto(pool: mysql.Pool, adminUserId: number, id: number): Promise<PhotoMutationResult> {
   return withTransaction(pool, async (conn) => {
     const item = await lockItem(conn, id)
-    if (!item) return 'not_found'
+    if (!item) return { status: 'not_found' }
+    if (item.imageKey) await setPhoto(conn, adminUserId, item, item.name, null)
+    return { status: 'ok', removedImageKey: item.imageKey }
+  })
+}
+
+export function deleteMenuItem(pool: mysql.Pool, adminUserId: number, id: number): Promise<PhotoMutationResult> {
+  return withTransaction(pool, async (conn) => {
+    const item = await lockItem(conn, id)
+    if (!item) return { status: 'not_found' }
     const rows = await lockCategory(conn, item.categoryKey)
     await conn.query('DELETE FROM menu_items WHERE id = ?', [id])
     await writePositions(conn, rows, rows.map((r) => r.id).filter((rowId) => rowId !== id))
     await writeAudit(conn, { adminUserId, action: 'menu_item.delete', menuItemId: id, menuItemName: item.name })
-    return 'ok'
+    return { status: 'ok', removedImageKey: item.imageKey }
   })
+}
+
+export async function referencedImageKeys(pool: mysql.Pool, keys: string[]) {
+  if (keys.length === 0) return new Set<string>()
+  const [rows] = await pool.query<mysql.RowDataPacket[]>('SELECT image_key FROM menu_items WHERE image_key IN (?)', [keys])
+  return new Set(rows.map((r) => r.image_key as string))
 }
 
 export function setMenuItemFlag(

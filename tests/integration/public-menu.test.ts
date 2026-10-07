@@ -55,6 +55,7 @@ describe('getPublicMenu', () => {
       name: 'Pizza sold out',
       description: 'Desc Pizza sold out',
       priceCents: 1300,
+      imageKey: null,
       isAvailable: false,
     })
   })
