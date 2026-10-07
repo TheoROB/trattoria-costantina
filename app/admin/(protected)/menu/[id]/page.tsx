@@ -7,10 +7,14 @@ import { requireAdmin } from '@/lib/auth/dal'
 import { getPool } from '@/lib/db'
 import { getAdminMenuItem } from '@/lib/menu/admin'
 import { parseItemId } from '@/lib/menu/admin-input'
+import { isPhotoUploadError, PHOTO_ERRORS } from '@/lib/media/messages'
 import { variantUrl } from '@/lib/media/storage'
 
-export default async function EditMenuItemPage({ params }: { params: Promise<{ id: string }> }) {
+type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{ photo?: string }> }
+
+export default async function EditMenuItemPage({ params, searchParams }: PageProps) {
   await requireAdmin()
+  const { photo: photoError } = await searchParams
   const id = parseItemId((await params).id)
   const item = id ? await getAdminMenuItem(getPool(), id) : null
   if (!item) notFound()
@@ -19,6 +23,11 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
     <>
       <Link href="/admin" className="admin-back">← Retour à la carte</Link>
       <h1>Modifier « {item.name} »</h1>
+      {isPhotoUploadError(photoError) && (
+        <p role="alert" className="admin-alert" id="photo-upload-error">
+          L’élément est enregistré, mais pas la photo. {PHOTO_ERRORS[photoError]}
+        </p>
+      )}
       {item.imageKey && (
         <section className="admin-card admin-photo">
           <h2>Photo actuelle</h2>

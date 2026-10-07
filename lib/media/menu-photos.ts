@@ -10,17 +10,6 @@ export type StorePhotoError = PhotoError | 'rate_limited' | 'failed'
 
 const errorCode = (error: unknown) => (error as { code?: string }).code ?? (error as Error).message
 
-// Takes the optional `photo` file out of the form data, so the remaining fields can be parsed strictly.
-// A file input with no file selected is sent as an empty file.
-export function takePhoto(formData: FormData): { ok: true; file: File | null } | { ok: false } {
-  const entries = formData.getAll('photo')
-  formData.delete('photo')
-  if (entries.length === 0) return { ok: true, file: null }
-  const [entry] = entries
-  if (entries.length > 1 || typeof entry === 'string') return { ok: false }
-  return { ok: true, file: entry.size === 0 ? null : entry }
-}
-
 // Validates, converts and writes the variants. The returned key is not referenced yet: the caller saves
 // it in the database, or discards it if that fails.
 export async function storeMenuPhoto(

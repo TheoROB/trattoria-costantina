@@ -107,38 +107,28 @@ const fields = (input: MenuItemInput) => ({
   is_visible: input.isVisible ? 1 : 0,
 })
 
-// The photo files must already be written: the key is only referenced once they exist.
-export function createMenuItem(pool: mysql.Pool, adminUserId: number, input: MenuItemInput, imageKey: string | null = null) {
+export function createMenuItem(pool: mysql.Pool, adminUserId: number, input: MenuItemInput) {
   return withTransaction(pool, async (conn) => {
     const rows = await lockCategory(conn, input.categoryKey)
     const [result] = await conn.query<mysql.ResultSetHeader>('INSERT INTO menu_items SET ?', [
-      { ...fields(input), image_key: imageKey, position: rows.length },
+      { ...fields(input), position: rows.length },
     ])
     await writePositions(conn, rows, rows.map((r) => r.id))
-    const audit = { adminUserId, menuItemId: result.insertId, menuItemName: input.name }
-    await writeAudit(conn, { ...audit, action: 'menu_item.create' })
-    if (imageKey) await writeAudit(conn, { ...audit, action: 'menu_item.photo_add' })
+    await writeAudit(conn, { adminUserId, action: 'menu_item.create', menuItemId: result.insertId, menuItemName: input.name })
     return { id: result.insertId }
   })
 }
 
-async function setPhoto(conn: mysql.PoolConnection, adminUserId: number, item: AdminMenuItem, name: string, imageKey: string | null) {
+async function setPhoto(conn: mysql.PoolConnection, adminUserId: number, item: AdminMenuItem, imageKey: string | null) {
   await conn.query('UPDATE menu_items SET image_key = ? WHERE id = ?', [imageKey, item.id])
   const action = !imageKey ? 'menu_item.photo_delete' : item.imageKey ? 'menu_item.photo_replace' : 'menu_item.photo_add'
-  await writeAudit(conn, { adminUserId, action, menuItemId: item.id, menuItemName: name })
+  await writeAudit(conn, { adminUserId, action, menuItemId: item.id, menuItemName: item.name })
 }
 
-// imageKey: new photo (files already written) replacing the current one, or null to keep the current one.
-export function updateMenuItem(
-  pool: mysql.Pool,
-  adminUserId: number,
-  id: number,
-  input: MenuItemInput,
-  imageKey: string | null = null,
-): Promise<PhotoMutationResult> {
+export function updateMenuItem(pool: mysql.Pool, adminUserId: number, id: number, input: MenuItemInput): Promise<MutationResult> {
   return withTransaction(pool, async (conn) => {
     const item = await lockItem(conn, id)
-    if (!item) return { status: 'not_found' }
+    if (!item) return 'not_found'
     if (item.categoryKey === input.categoryKey) {
       await conn.query('UPDATE menu_items SET ? WHERE id = ?', [fields(input), id])
     } else {
@@ -149,8 +139,16 @@ export function updateMenuItem(
       await writePositions(conn, target, target.map((r) => r.id))
     }
     await writeAudit(conn, { adminUserId, action: 'menu_item.update', menuItemId: id, menuItemName: input.name })
-    if (!imageKey) return { status: 'ok', removedImageKey: null }
-    await setPhoto(conn, adminUserId, item, input.name, imageKey)
+    return 'ok'
+  })
+}
+
+// The new photo's files must already be written: the key is only referenced once they exist.
+export function setMenuItemPhoto(pool: mysql.Pool, adminUserId: number, id: number, imageKey: string): Promise<PhotoMutationResult> {
+  return withTransaction(pool, async (conn) => {
+    const item = await lockItem(conn, id)
+    if (!item) return { status: 'not_found' }
+    await setPhoto(conn, adminUserId, item, imageKey)
     return { status: 'ok', removedImageKey: item.imageKey }
   })
 }
@@ -159,7 +157,7 @@ export function removeMenuItemPhoto(pool: mysql.Pool, adminUserId: number, id: n
   return withTransaction(pool, async (conn) => {
     const item = await lockItem(conn, id)
     if (!item) return { status: 'not_found' }
-    if (item.imageKey) await setPhoto(conn, adminUserId, item, item.name, null)
+    if (item.imageKey) await setPhoto(conn, adminUserId, item, null)
     return { status: 'ok', removedImageKey: item.imageKey }
   })
 }

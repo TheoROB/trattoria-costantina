@@ -22,6 +22,11 @@ async function photoAudit() {
   )
   return rows
 }
+async function createWithPhoto(key: string) {
+  const { id } = await menu.createMenuItem(pool, julien, input)
+  await menu.setMenuItemPhoto(pool, julien, id, key)
+  return { id }
+}
 const imageKeyOf = async (id: number) => (await menu.getAdminMenuItem(pool, id))?.imageKey
 
 beforeAll(async () => {
@@ -40,36 +45,36 @@ beforeEach(async () => {
 afterAll(async () => pool.end())
 
 describe('menu item photos', () => {
-  it('creates an item with a photo and audits the addition', async () => {
+  it('adds a photo to an item and audits the addition', async () => {
     const key = newImageKey()
-    const { id } = await menu.createMenuItem(pool, julien, input, key)
+    const { id } = await menu.createMenuItem(pool, julien, input)
+    expect(await menu.setMenuItemPhoto(pool, julien, id, key)).toEqual({ status: 'ok', removedImageKey: null })
     expect(await imageKeyOf(id)).toBe(key)
     expect(await photoAudit()).toEqual([{ admin_user_id: julien, action: 'menu_item.photo_add', menu_item_id: id, menu_item_name: 'Margherita' }])
   })
 
-  it('adds then replaces a photo, reporting the key that is no longer referenced', async () => {
-    const { id } = await menu.createMenuItem(pool, julien, input)
+  it('replaces a photo, reporting the key that is no longer referenced', async () => {
     const first = newImageKey()
     const second = newImageKey()
-    expect(await menu.updateMenuItem(pool, julien, id, input, first)).toEqual({ status: 'ok', removedImageKey: null })
-    expect(await menu.updateMenuItem(pool, theo, id, { ...input, name: 'Regina' }, second)).toEqual({ status: 'ok', removedImageKey: first })
+    const { id } = await createWithPhoto(first)
+    expect(await menu.setMenuItemPhoto(pool, theo, id, second)).toEqual({ status: 'ok', removedImageKey: first })
     expect(await imageKeyOf(id)).toBe(second)
     expect(await photoAudit()).toEqual([
       { admin_user_id: julien, action: 'menu_item.photo_add', menu_item_id: id, menu_item_name: 'Margherita' },
-      { admin_user_id: theo, action: 'menu_item.photo_replace', menu_item_id: id, menu_item_name: 'Regina' },
+      { admin_user_id: theo, action: 'menu_item.photo_replace', menu_item_id: id, menu_item_name: 'Margherita' },
     ])
   })
 
-  it('keeps the current photo when an update carries no new photo', async () => {
+  it('keeps the current photo when the item text is updated', async () => {
     const key = newImageKey()
-    const { id } = await menu.createMenuItem(pool, julien, input, key)
-    expect(await menu.updateMenuItem(pool, julien, id, { ...input, priceCents: 1300 })).toEqual({ status: 'ok', removedImageKey: null })
+    const { id } = await createWithPhoto(key)
+    expect(await menu.updateMenuItem(pool, julien, id, { ...input, priceCents: 1300 })).toBe('ok')
     expect(await imageKeyOf(id)).toBe(key)
   })
 
   it('removes a photo (audited once) and is a no-op without one', async () => {
     const key = newImageKey()
-    const { id } = await menu.createMenuItem(pool, julien, input, key)
+    const { id } = await createWithPhoto(key)
     expect(await menu.removeMenuItemPhoto(pool, theo, id)).toEqual({ status: 'ok', removedImageKey: key })
     expect(await imageKeyOf(id)).toBeNull()
     expect(await menu.removeMenuItemPhoto(pool, theo, id)).toEqual({ status: 'ok', removedImageKey: null })
@@ -78,17 +83,17 @@ describe('menu item photos', () => {
 
   it('reports the photo of a deleted item so its files can be removed', async () => {
     const key = newImageKey()
-    const { id } = await menu.createMenuItem(pool, julien, input, key)
+    const { id } = await createWithPhoto(key)
     expect(await menu.deleteMenuItem(pool, julien, id)).toEqual({ status: 'ok', removedImageKey: key })
     expect(await menu.removeMenuItemPhoto(pool, julien, id)).toEqual({ status: 'not_found' })
-    expect(await menu.updateMenuItem(pool, julien, id, input, newImageKey())).toEqual({ status: 'not_found' })
+    expect(await menu.setMenuItemPhoto(pool, julien, id, newImageKey())).toEqual({ status: 'not_found' })
   })
 
   it('serialises concurrent replacements: every replaced key is reported exactly once', async () => {
     const original = newImageKey()
-    const { id } = await menu.createMenuItem(pool, julien, input, original)
+    const { id } = await createWithPhoto(original)
     const keys = Array.from({ length: 5 }, newImageKey)
-    const results = await Promise.all(keys.map((key, i) => menu.updateMenuItem(pool, i % 2 ? julien : theo, id, input, key)))
+    const results = await Promise.all(keys.map((key, i) => menu.setMenuItemPhoto(pool, i % 2 ? julien : theo, id, key)))
     const removed = results.map((r) => (r.status === 'ok' ? r.removedImageKey : 'not_found'))
     const final = await imageKeyOf(id)
     // Every key except the final one was removed once; the final one never.
@@ -98,13 +103,14 @@ describe('menu item photos', () => {
 
   it('lists which keys are still referenced', async () => {
     const used = newImageKey()
-    await menu.createMenuItem(pool, julien, input, used)
+    await createWithPhoto(used)
     expect(await menu.referencedImageKeys(pool, [used, newImageKey()])).toEqual(new Set([used]))
     expect(await menu.referencedImageKeys(pool, [])).toEqual(new Set())
   })
 
   it('refuses a key that is not a server-generated token at the database level', async () => {
-    await expect(menu.createMenuItem(pool, julien, input, '../../etc/passwd')).rejects.toThrow(/chk_menu_items_image_key/)
+    const { id } = await menu.createMenuItem(pool, julien, input)
+    await expect(menu.setMenuItemPhoto(pool, julien, id, '../../etc/passwd')).rejects.toThrow(/chk_menu_items_image_key/)
   })
 })
 

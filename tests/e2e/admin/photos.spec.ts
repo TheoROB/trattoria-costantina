@@ -1,9 +1,12 @@
 import fs from 'node:fs'
+import http from 'node:http'
 import path from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import type { RowDataPacket } from 'mysql2/promise'
 import sharp from 'sharp'
-import { captureAction, replayAction } from '../../security/helpers/actions'
+import { appendActionField, captureAction, replayAction } from '../../security/helpers/actions'
+import { sessionToken } from '../../security/helpers/admin'
+import { SESSION_COOKIE } from '../../security/helpers/credentials'
 import { execute, query } from '../../security/helpers/db'
 import { E2E_MEDIA_ROOT } from '../media-root'
 import { ADMINS } from './credentials'
@@ -141,7 +144,8 @@ test.describe('a refused replacement keeps the current photo and writes no file'
       const before = await itemRow(NAME)
       const filesBefore = mediaFiles()
       await editPhoto(page, NAME, files[file])
-      await expect(page.locator('#item-photo-error')).toHaveText(message)
+      await expect(page).toHaveURL(new RegExp(`/admin/menu/${before.id}\\?photo=`))
+      await expect(page.locator('#photo-upload-error')).toHaveText(message)
       await expect(page.getByLabel('Nom')).toHaveValue(NAME)
       expect(await itemRow(NAME)).toEqual(before)
       expect(mediaFiles()).toEqual(filesBefore)
@@ -173,28 +177,109 @@ test('uploads are rate limited per account', async ({ page }) => {
   for (let i = 0; i < 20; i++) await execute('INSERT INTO media_upload_attempts (admin_user_id, created_at) VALUES (?, UTC_TIMESTAMP(3))', [adminId])
   const before = await itemRow(NAME)
   await editPhoto(page, NAME, files.png)
-  await expect(page.locator('#item-photo-error')).toHaveText(/Trop de photos/)
+  await expect(page.locator('#photo-upload-error')).toHaveText(/Trop de photos/)
   expect(await itemRow(NAME)).toEqual(before)
   await execute('DELETE FROM media_upload_attempts')
 })
 
-test('an upload replayed without a valid session writes nothing', async ({ page, baseURL }) => {
-  await login(page)
-  await page.goto('/admin/menu/new')
-  await page.getByLabel('Catégorie').selectOption('desserts')
-  await page.getByLabel('Nom').fill('Dessert Upload Forgé')
-  await page.getByLabel('Prix (€)').fill('6')
-  await page.getByLabel('Photo (facultatif)').setInputFiles(files.jpeg)
-  const action = await captureAction(page, () => page.getByRole('button', { name: 'Enregistrer' }).click())
-  expect(action.body.includes(files.jpeg.buffer.subarray(0, 64))).toBe(true)
+function multipart(parts: { name: string; filename?: string; type?: string; data: Buffer | string }[]) {
+  const boundary = '----trattoria-e2e-boundary'
+  const chunks = parts.flatMap(({ name, filename, type, data }) => [
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"${filename ? `; filename="${filename}"` : ''}\r\n`),
+    Buffer.from(type ? `Content-Type: ${type}\r\n\r\n` : '\r\n'),
+    Buffer.isBuffer(data) ? data : Buffer.from(data),
+    Buffer.from('\r\n'),
+  ])
+  return { body: Buffer.concat([...chunks, Buffer.from(`--${boundary}--\r\n`)]), contentType: `multipart/form-data; boundary=${boundary}` }
+}
 
-  const filesBefore = mediaFiles()
-  for (const token of [undefined, 'A'.repeat(43)]) {
-    const response = await replayAction(action, { baseURL: baseURL!, token })
-    await response.dispose()
+test.describe('the photo upload endpoint', () => {
+  let token: string
+  let itemId: number
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage()
+    await login(page)
+    token = await sessionToken(page.context())
+    await page.close()
+    itemId = (await itemRow('Dessert Test 1')).id
+  })
+
+  const photo = () => multipart([{ name: 'photo', filename: 'IMG.jpg', type: 'image/jpeg', data: files.jpeg.buffer }])
+  async function post(request: import('@playwright/test').APIRequestContext, baseURL: string, options: {
+    token?: string; origin?: string | null; contentType?: string; body?: Buffer; headers?: Record<string, string>; id?: string | number
+  } = {}) {
+    const { body, contentType } = options.body ? { body: options.body, contentType: options.contentType ?? photo().contentType } : photo()
+    const headers: Record<string, string> = { 'content-type': options.contentType ?? contentType, ...options.headers }
+    if (options.origin !== null) headers.origin = options.origin ?? baseURL
+    if (options.token) headers.cookie = `${SESSION_COOKIE}=${options.token}`
+    return request.post(`/api/admin/menu/${options.id ?? itemId}/photo`, { headers, data: body, maxRedirects: 0 })
   }
-  expect(await itemRow('Dessert Upload Forgé')).toBeUndefined()
-  expect(mediaFiles()).toEqual(filesBefore)
+
+  test('refuses every request that is not an authenticated same-origin multipart upload, writing nothing', async ({ request, baseURL }) => {
+    const before = await itemRow('Dessert Test 1')
+    const filesBefore = mediaFiles()
+    const cases: [string, Promise<import('@playwright/test').APIResponse>, number][] = [
+      ['no cookie', post(request, baseURL!), 401],
+      ['forged cookie', post(request, baseURL!, { token: 'A'.repeat(43) }), 401],
+      ['cross-origin', post(request, baseURL!, { token, origin: 'https://evil.example' }), 403],
+      ['no Origin header', post(request, baseURL!, { token, origin: null }), 403],
+      ['invalid id', post(request, baseURL!, { token, id: '1abc' }), 404],
+      ['unknown id', post(request, baseURL!, { token, id: 999999 }), 404],
+      ['not multipart', post(request, baseURL!, { token, contentType: 'image/jpeg', body: files.jpeg.buffer }), 415],
+      ['body over the limit', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'big.jpg', type: 'image/jpeg', data: Buffer.alloc(10 * 1024 * 1024 + 100 * 1024, 1) }]).body }), 413],
+      ['extra field', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', type: 'image/jpeg', data: files.jpeg.buffer }, { name: 'image_key', data: 'f'.repeat(32) }]).body }), 400],
+      ['two photos', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', data: files.jpeg.buffer }, { name: 'photo', filename: 'b.jpg', data: files.jpeg.buffer }]).body }), 400],
+      ['text instead of a file', post(request, baseURL!, { token, body: multipart([{ name: 'photo', data: 'not a file' }]).body }), 400],
+      ['SVG', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', type: 'image/jpeg', data: files.svg.buffer }]).body }), 422],
+    ]
+    for (const [label, response, status] of cases) {
+      const r = await response
+      expect(r.status(), label).toBe(status)
+      expect(r.headers()['cache-control'], label).toContain('no-store')
+    }
+    expect(await itemRow('Dessert Test 1')).toEqual(before)
+    expect(mediaFiles()).toEqual(filesBefore)
+  })
+
+  test('stops reading a chunked body (no Content-Length) once it exceeds the limit', async ({ baseURL }) => {
+    const big = multipart([{ name: 'photo', filename: 'big.jpg', type: 'image/jpeg', data: Buffer.alloc(10 * 1024 * 1024 + 100 * 1024, 1) }])
+    const filesBefore = mediaFiles()
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = http.request(`${baseURL}/api/admin/menu/${itemId}/photo`, {
+        method: 'POST',
+        headers: { 'content-type': big.contentType, origin: baseURL!, cookie: `${SESSION_COOKIE}=${token}`, 'transfer-encoding': 'chunked' },
+      }, (res) => {
+        res.resume()
+        resolve(res.statusCode!)
+      })
+      req.on('error', reject)
+      for (let offset = 0; offset < big.body.length; offset += 256 * 1024) req.write(big.body.subarray(offset, offset + 256 * 1024))
+      req.end()
+    })
+    expect(status).toBe(413)
+    expect(mediaFiles()).toEqual(filesBefore)
+  })
+
+  test('only POST is accepted', async ({ request }) => {
+    for (const method of ['GET', 'PUT', 'DELETE'] as const) {
+      const response = await request.fetch(`/api/admin/menu/${itemId}/photo`, { method, headers: { cookie: `${SESSION_COOKIE}=${token}` } })
+      expect(response.status(), method).toBe(405)
+    }
+  })
+
+  test('Server Actions keep the default 1 MB body limit', async ({ page, baseURL }) => {
+    await login(page)
+    await page.goto('/admin/menu/new')
+    await page.getByLabel('Catégorie').selectOption('desserts')
+    await page.getByLabel('Nom').fill('Dessert Trop Lourd')
+    await page.getByLabel('Prix (€)').fill('6')
+    const action = await captureAction(page, () => page.getByRole('button', { name: 'Enregistrer' }).click())
+    const body = appendActionField(action, 'padding', 'x'.repeat(2 * 1024 * 1024))
+    const response = await replayAction(action, { baseURL: baseURL!, token: await sessionToken(page.context()), body })
+    expect(response.ok()).toBe(false)
+    await response.dispose()
+    expect(await itemRow('Dessert Trop Lourd')).toBeUndefined()
+  })
 })
 
 test('media URLs only serve server-generated variant names', async ({ request }) => {
