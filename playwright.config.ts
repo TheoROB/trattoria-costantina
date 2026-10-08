@@ -30,7 +30,12 @@ export default defineConfig({
       command: `mkdir -p .e2e-logs && npm run start -- -p ${PORT} >> .e2e-logs/server.log 2>&1`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: !process.env.CI,
-      env: { DATABASE_URL: process.env.DATABASE_URL_TEST ?? '', AUTH_HMAC_SECRET: E2E_AUTH_HMAC_SECRET, MEDIA_ROOT: E2E_MEDIA_ROOT },
+      env: {
+        DATABASE_URL: process.env.DATABASE_URL_TEST ?? '',
+        AUTH_HMAC_SECRET: E2E_AUTH_HMAC_SECRET,
+        MEDIA_ROOT: E2E_MEDIA_ROOT,
+        APP_ORIGIN: `http://localhost:${PORT}`,
+      },
     },
     {
       command: `npm run start -- -p ${DB_DOWN_PORT}`,

@@ -223,6 +223,9 @@ test.describe('the photo upload endpoint', () => {
       ['forged cookie', post(request, baseURL!, { token: 'A'.repeat(43) }), 401],
       ['cross-origin', post(request, baseURL!, { token, origin: 'https://evil.example' }), 403],
       ['no Origin header', post(request, baseURL!, { token, origin: null }), 403],
+      // The decision ignores Host and X-Forwarded-Host: forging them to match the attacker's origin fails.
+      ['forged X-Forwarded-Host', post(request, baseURL!, { token, origin: 'https://evil.example', headers: { 'x-forwarded-host': 'evil.example' } }), 403],
+      ['same host, other scheme', post(request, baseURL!, { token, origin: baseURL!.replace('http:', 'https:') }), 403],
       ['invalid id', post(request, baseURL!, { token, id: '1abc' }), 404],
       ['unknown id', post(request, baseURL!, { token, id: 999999 }), 404],
       ['not multipart', post(request, baseURL!, { token, contentType: 'image/jpeg', body: files.jpeg.buffer }), 415],

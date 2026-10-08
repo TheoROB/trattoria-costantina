@@ -6,6 +6,7 @@ import { cleanupMenuPhotos, discardMenuPhoto, storeMenuPhoto } from '@/lib/media
 import type { PhotoUploadError } from '@/lib/media/messages'
 import { setMenuItemPhoto } from '@/lib/menu/admin'
 import { parseItemId } from '@/lib/menu/admin-input'
+import { isAllowedOrigin, resolveAppOrigin } from '@/lib/security/origin'
 
 // Photo upload, kept out of Server Actions so that they keep Next's default 1 MB body limit.
 // Only POST is exported: other methods get 405 from Next.js.
@@ -31,19 +32,6 @@ const STATUS: Record<PhotoUploadError | 'unauthorized' | 'forbidden' | 'unsuppor
 
 const reply = (error: keyof typeof STATUS | null) =>
   Response.json(error ? { error } : { ok: true }, { status: error ? STATUS[error] : 200, headers: { 'Cache-Control': 'no-store' } })
-
-// Route Handlers have no built-in CSRF check (unlike Server Actions): same rule as Next.js applies to
-// actions, the Origin host must be the host the request was sent to. A missing Origin is refused.
-function sameOrigin(request: Request) {
-  const origin = request.headers.get('origin')
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
-  if (!origin || !host) return false
-  try {
-    return new URL(origin).host === host.split(',')[0].trim()
-  } catch {
-    return false
-  }
-}
 
 // Reads at most MAX_BODY_BYTES, whatever Content-Length says (it may be absent or wrong).
 async function readBody(request: Request) {
@@ -81,7 +69,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // Nothing is read from the body before the session, origin and size checks.
   const admin = await getCurrentAdmin()
   if (!admin) return reply('unauthorized')
-  if (!sameOrigin(request)) return reply('forbidden')
+  // Route Handlers have no built-in CSRF check (unlike Server Actions): the Origin must be exactly
+  // APP_ORIGIN. A missing Origin is refused.
+  const appOrigin = resolveAppOrigin(process.env.APP_ORIGIN)
+  if (!appOrigin) {
+    console.error('[admin] photo upload refused: APP_ORIGIN is missing or invalid')
+    return reply('failed')
+  }
+  if (!isAllowedOrigin(request.headers.get('origin'), appOrigin)) return reply('forbidden')
   const id = parseItemId((await params).id)
   if (!id) return reply('not_found')
   const contentType = request.headers.get('content-type') ?? ''
