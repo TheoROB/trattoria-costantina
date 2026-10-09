@@ -6,6 +6,7 @@
 import { parseArgs } from 'node:util'
 import mysql from 'mysql2/promise'
 import { hashPassword } from '../lib/auth/password.mts'
+import { PromptCancelledError, readConfirmedPassword } from '../lib/cli/hidden-input.mts'
 
 const MAX_ACCOUNTS = 2
 const PASSWORD_LENGTH = { min: 12, max: 256 }
@@ -16,31 +17,15 @@ function fail(message: string): never {
   process.exit(1)
 }
 
-async function readHidden(prompt: string) {
-  process.stdout.write(prompt)
-  process.stdin.setRawMode(true)
-  process.stdin.resume()
-  let value = ''
-  for await (const chunk of process.stdin) {
-    for (const char of String(chunk)) {
-      if (char === '\r' || char === '\n') {
-        process.stdin.setRawMode(false)
-        process.stdin.pause()
-        process.stdout.write('\n')
-        return value
-      }
-      if (char === '\u0003') fail('\nCancelled')
-      value = char === '\u007f' ? value.slice(0, -1) : value + char
-    }
-  }
-  return value
-}
-
 async function readPassword() {
   if (process.stdin.isTTY) {
-    const first = await readHidden('New password: ')
-    if ((await readHidden('Repeat password: ')) !== first) fail('Passwords do not match')
-    return first
+    try {
+      const password = await readConfirmedPassword(process.stdin, process.stdout)
+      return password ?? fail('Passwords do not match')
+    } catch (error) {
+      if (error instanceof PromptCancelledError) fail('Cancelled')
+      throw error
+    }
   }
   let input = ''
   for await (const chunk of process.stdin) input += chunk
