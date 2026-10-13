@@ -5,8 +5,8 @@ test.describe('home page menu preview', () => {
   test('shows pizzas plus two other categories, at most four items each', async ({ page }) => {
     await page.goto('/')
     const section = page.locator('#specialites')
-    await expect(section.locator('.menu-category h3')).toHaveText(['Antipasti', 'Pâtes & Plats', 'Pizzas'])
-    const pizzas = section.locator('.menu-category').filter({ hasText: 'Pizzas' })
+    await expect(section.locator('.menu-category h3')).toHaveText(['Antipasti', 'Pasta', 'Pizza Napoletana'])
+    const pizzas = section.locator('.menu-category').filter({ hasText: 'Pizza Napoletana' })
     await expect(pizzas.locator('.menu-name')).toHaveCount(4)
   })
 
@@ -39,8 +39,11 @@ test.describe('/carte', () => {
 
     await page.goto('/carte')
     await expect(page.locator('h1')).toHaveText('La Carte')
-    await expect(page.locator('.menu-category h2')).toHaveText(['Antipasti', 'Pâtes & Plats', 'Pizzas', 'Desserts', 'Boissons'])
-    const pizzas = page.locator('.menu-category').filter({ hasText: 'Pizzas' }).locator('.menu-name')
+    // Empty categories are not shown; items still in the retired "Boissons" category come last.
+    await expect(page.locator('.menu-category h2')).toHaveText([
+      'Antipasti', 'Pasta', 'Pizza Napoletana', 'Desserts', 'Spritz', 'Vins', 'Sans alcool', 'Boissons',
+    ])
+    const pizzas = page.locator('.menu-category').filter({ hasText: 'Pizza Napoletana' }).locator('.menu-name')
     await expect(pizzas).toHaveText([
       /^Pizza Test Indisponible/,
       'Pizza Test 1',
@@ -49,6 +52,18 @@ test.describe('/carte', () => {
       'Pizza Test 4',
       'Pizza Test 5',
     ])
+  })
+
+  test('fits a phone screen, one category under the other', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/carte')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
+    const boxes = await page.locator('.menu-category').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()))
+    expect(boxes).toHaveLength(8)
+    for (const [index, box] of boxes.entries()) {
+      expect(box.right).toBeLessThanOrEqual(375)
+      if (index > 0) expect(box.top).toBeGreaterThanOrEqual(boxes[index - 1].bottom)
+    }
   })
 
   test('has its own title and keeps the site navigation', async ({ page }) => {

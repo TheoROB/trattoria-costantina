@@ -32,6 +32,7 @@ describe('parseMenuItemForm', () => {
     ['image key', { ...valid, image_key: 'abcdefabcdefabcdef' }],
     ['position', { ...valid, position: '0' }],
     ['unknown category', { ...valid, category: 'secret' }],
+    ['retired category', { ...valid, category: 'boissons' }],
     ['empty name', { ...valid, name: '   ' }],
     ['name too long', { ...valid, name: 'x'.repeat(81) }],
     ['description too long', { ...valid, description: 'x'.repeat(401) }],

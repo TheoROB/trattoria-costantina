@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { insertMenuItem, menuItem } from '../../security/helpers/db'
 import { ADMINS } from './credentials'
 
 // Shared test database: the scenarios build on each other.
@@ -26,7 +27,8 @@ test('Julien and Théo can both sign in, see the categories in order, and sign o
     await login(page, who)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('La carte')
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
-      'Antipasti', 'Pâtes & Plats', 'Pizzas', 'Desserts', 'Boissons', 'Réservations',
+      'Antipasti', 'Pasta', 'Pizza Napoletana', 'Desserts', 'Spritz', 'Apéritifs', 'Bières pression', 'Bières bouteille',
+      'Vins', 'Digestifs', 'Sans alcool', 'Boissons (à reclasser)', 'Réservations',
     ])
     await expect(page.getByText('Les réservations sont gérées via DISH Reservation.')).toBeVisible()
     await expect(page.locator('input[type="file"]')).toHaveCount(0)
@@ -127,7 +129,7 @@ test('reorders items within a category, reflected on /carte', async ({ page }) =
   await expect(adminItem(page, 'Pizza Test 2')).toContainText(`Position ${first + 1}`)
 
   await page.goto('/carte')
-  const publicPizzas = page.locator('.menu-category').filter({ has: page.getByRole('heading', { name: 'Pizzas' }) })
+  const publicPizzas = page.locator('.menu-category').filter({ has: page.getByRole('heading', { name: 'Pizza Napoletana' }) })
   const names = await publicPizzas.locator('.menu-name').allTextContents()
   expect(names.indexOf('Pizza Test 2')).toBeLessThan(names.indexOf('Pizza Test 1'))
 
@@ -196,7 +198,7 @@ test.describe('on a phone', () => {
   test('create with a validation error, edit, reorder and delete from a phone', async ({ page }) => {
     await login(page, 'theo')
     await page.getByRole('link', { name: 'Nouvel élément' }).tap()
-    await page.getByLabel('Catégorie').selectOption('boissons')
+    await page.getByLabel('Catégorie').selectOption('sans_alcool')
     await page.getByLabel('Nom').fill('Limonata')
     await page.getByLabel('Prix (€)').fill('3,5,0')
     await page.getByRole('button', { name: 'Enregistrer' }).tap()
@@ -210,8 +212,8 @@ test.describe('on a phone', () => {
     // New items go last: move it above the existing drink.
     await adminItem(page, 'Limonata').getByRole('button', { name: 'Monter' }).tap()
     await expect
-      .poll(() => page.locator('section[aria-labelledby="category-boissons"] .admin-item-name').allTextContents())
-      .toEqual(['Limonata', 'Boisson Test 1'])
+      .poll(() => page.locator('section[aria-labelledby="category-sans_alcool"] .admin-item-name').allTextContents())
+      .toEqual(['Limonata', 'Soda Test 1'])
 
     await adminItem(page, 'Limonata').getByRole('link', { name: 'Modifier' }).tap()
     await page.getByLabel('Description').fill('Citron de Sicile')
@@ -225,4 +227,34 @@ test.describe('on a phone', () => {
     await expect(page).toHaveURL(/\/admin$/)
     await expect(adminItem(page, 'Limonata')).toHaveCount(0)
   })
+})
+
+test('an item left in the retired "Boissons" category is moved by giving it a new category', async ({ page }) => {
+  const legacy = await insertMenuItem({ category_key: 'boissons', name: 'Negroni', price_cents: 900, position: 1 })
+  await login(page, 'julien')
+  const section = page.locator('section[aria-labelledby="category-boissons"]')
+  await expect(section.getByRole('heading')).toHaveText('Boissons (à reclasser)')
+  await expect(section).toContainText('Cette catégorie n’existe plus')
+
+  await adminItem(page, 'Negroni').getByRole('link', { name: 'Modifier' }).click()
+  const select = page.getByLabel('Catégorie')
+  // Never preselected on a current category, and the retired one is not offered.
+  await expect(select).toHaveValue('')
+  await expect(select.locator('option:not([disabled])')).toHaveCount(11)
+  await expect(select.locator('option[value="boissons"]')).toHaveCount(0)
+  await expect(page.locator('#item-category-hint')).toContainText('ancienne catégorie « Boissons »')
+  await expect(select).toHaveAttribute('aria-describedby', 'item-category-hint')
+
+  // Saving without choosing is not possible.
+  await page.getByRole('button', { name: 'Enregistrer' }).click()
+  await expect(page).toHaveURL(new RegExp(`/admin/menu/${legacy.id}$`))
+  expect((await menuItem(legacy.id)).category_key).toBe('boissons')
+
+  await select.selectOption('spritz')
+  await page.getByRole('button', { name: 'Enregistrer' }).click()
+  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page.locator('section[aria-labelledby="category-spritz"] .admin-item-name')).toHaveText(['Spritz Test 1', 'Negroni'])
+  expect(await menuItem(legacy.id)).toMatchObject({ category_key: 'spritz', name: 'Negroni', price_cents: 900 })
+  // The other item still in the retired category is untouched.
+  await expect(section.locator('.admin-item-name')).toHaveText(['Boisson Test 1'])
 })

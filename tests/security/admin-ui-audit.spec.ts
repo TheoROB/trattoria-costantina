@@ -43,15 +43,12 @@ test('admin dashboard exposes the contracted controls and category order', async
   await page.goto('/admin')
 
   await expect(page.getByRole('heading', { level: 1, name: 'La carte' })).toBeVisible()
-  const categoryNames = ['Antipasti', 'Pâtes & Plats', 'Pizzas', 'Desserts', 'Boissons']
+  const categoryNames = [
+    'Antipasti', 'Pasta', 'Pizza Napoletana', 'Desserts', 'Spritz', 'Apéritifs', 'Bières pression', 'Bières bouteille',
+    'Vins', 'Digestifs', 'Sans alcool',
+  ]
   const headings = await page.getByRole('heading', { level: 2 }).allTextContents()
-  expect(headings.filter((heading) => categoryNames.includes(heading))).toEqual([
-    'Antipasti',
-    'Pâtes & Plats',
-    'Pizzas',
-    'Desserts',
-    'Boissons',
-  ])
+  expect(headings.filter((heading) => categoryNames.includes(heading))).toEqual(categoryNames)
   const item = page.locator('li[data-item-id]').filter({ hasText: 'Pizza Test 1' })
   await expect(item).toContainText('11')
   await expect(item.getByRole('button', { name: 'Monter' })).toBeVisible()

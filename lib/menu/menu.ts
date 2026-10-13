@@ -1,8 +1,8 @@
-import { MENU_CATEGORIES, type MenuCategoryKey } from './categories'
+import { STORED_CATEGORIES, type StoredCategoryKey } from './categories'
 
 export type PublicMenuItem = {
   id: number
-  categoryKey: MenuCategoryKey
+  categoryKey: StoredCategoryKey
   name: string
   description: string | null
   priceCents: number
@@ -11,7 +11,7 @@ export type PublicMenuItem = {
 }
 
 export type MenuCategoryGroup = {
-  key: MenuCategoryKey
+  key: StoredCategoryKey
   label: string
   items: PublicMenuItem[]
 }
@@ -20,7 +20,7 @@ const PREVIEW_CATEGORY_COUNT = 3
 const PREVIEW_ITEMS_PER_CATEGORY = 4
 
 export function groupByCategory(items: PublicMenuItem[]): MenuCategoryGroup[] {
-  return MENU_CATEGORIES.map(({ key, label }) => ({
+  return STORED_CATEGORIES.map(({ key, label }) => ({
     key,
     label,
     items: items.filter((item) => item.categoryKey === key),

@@ -42,6 +42,27 @@ describe('runMigrations', () => {
   })
 })
 
+describe('0004_expand_menu_categories', () => {
+  it('keeps the existing items, "boissons" included, and accepts the new categories', async () => {
+    // Database as deployed before 0004, with items in every old category.
+    const before = fs.mkdtempSync(path.join(os.tmpdir(), 'migrations-'))
+    for (const file of fs.readdirSync(MIGRATIONS_DIR).filter((f) => f < '0004')) fs.copyFileSync(path.join(MIGRATIONS_DIR, file), path.join(before, file))
+    await runMigrations(url, before)
+    for (const category_key of ['antipasti', 'pates_plats', 'pizzas', 'desserts', 'boissons']) {
+      await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `Old ${category_key}`, price_cents: 500 }])
+    }
+    await expect(conn.query("INSERT INTO menu_items SET category_key = 'spritz', name = 'Too early', price_cents = 800")).rejects.toThrow()
+
+    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0004_expand_menu_categories.sql'])
+    const [rows] = await conn.query<mysql.RowDataPacket[]>('SELECT category_key FROM menu_items ORDER BY id')
+    expect(rows.map((r) => r.category_key)).toEqual(['antipasti', 'pates_plats', 'pizzas', 'desserts', 'boissons'])
+    for (const category_key of ['spritz', 'aperitifs', 'bieres_pression', 'bieres_bouteille', 'vins', 'digestifs', 'sans_alcool']) {
+      await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `New ${category_key}`, price_cents: 500 }])
+    }
+    await expect(conn.query("INSERT INTO menu_items SET category_key = 'sushis', name = 'X', price_cents = 800")).rejects.toThrow()
+  })
+})
+
 describe('menu_items constraints', () => {
   beforeEach(async () => {
     await runMigrations(url, MIGRATIONS_DIR)

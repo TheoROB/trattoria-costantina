@@ -21,6 +21,10 @@ export const E2E_MENU = [
   ['pizzas', 'Pizza Test Indisponible', 1200, 0, 1, 0],
   ['pizzas', 'Pizza Test Masquée', 1000, 1, 0, 0],
   ['desserts', 'Dessert Test 1', 700, 1, 1, 1],
+  ['spritz', 'Spritz Test 1', 800, 1, 1, 1],
+  ['vins', 'Vin Test 1', 2400, 1, 1, 1],
+  ['sans_alcool', 'Soda Test 1', 350, 1, 1, 1],
+  // Retired category, as left by the data from before migration 0004.
   ['boissons', 'Boisson Test 1', 300, 1, 1, 1],
 ] as const
 

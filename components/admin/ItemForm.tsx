@@ -9,7 +9,7 @@ import type { FieldName } from '@/lib/menu/admin-input'
 import { PHOTO_ACCEPT } from '@/lib/media/limits'
 import { PREPARE_ERRORS } from '@/lib/media/messages'
 import { preparePhoto } from '@/lib/media/prepare-photo'
-import { MENU_CATEGORIES } from '@/lib/menu/categories'
+import { LEGACY_MENU_CATEGORIES, MENU_CATEGORIES, isMenuCategoryKey } from '@/lib/menu/categories'
 import { centsToInput } from '@/lib/menu/price'
 
 type Props = {
@@ -88,6 +88,9 @@ export function ItemForm({ action, item }: Props) {
   const errors = state.fieldErrors
   const describe = (field: FieldName) =>
     errors?.[field] ? { 'aria-invalid': true, 'aria-describedby': `item-${field}-error` } : {}
+  // An item still in a retired category has to be given a current one when it is saved.
+  const legacyCategory = LEGACY_MENU_CATEGORIES.find((c) => c.key === item?.categoryKey)
+  const currentCategory = item && isMenuCategoryKey(item.categoryKey) ? item.categoryKey : ''
 
   return (
     // Remounted after a failed submission so that the typed values are shown again.
@@ -97,10 +100,22 @@ export function ItemForm({ action, item }: Props) {
 
       <div className="admin-field">
         <label htmlFor="item-category">Catégorie</label>
-        <select id="item-category" name="category" required defaultValue={sent?.category ?? item?.categoryKey ?? ''} {...describe('category')}>
+        <select
+          id="item-category"
+          name="category"
+          required
+          defaultValue={sent?.category ?? currentCategory}
+          {...describe('category')}
+          aria-describedby={[legacyCategory && 'item-category-hint', errors?.category && 'item-category-error'].filter(Boolean).join(' ') || undefined}
+        >
           <option value="" disabled>Choisir une catégorie</option>
           {MENU_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
         </select>
+        {legacyCategory && (
+          <p className="admin-hint" id="item-category-hint">
+            Cet élément est encore dans l’ancienne catégorie « {legacyCategory.label} », qui n’existe plus : choisissez sa nouvelle catégorie.
+          </p>
+        )}
         <FieldError field="category" errors={errors} />
       </div>
 

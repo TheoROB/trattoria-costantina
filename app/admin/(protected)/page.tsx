@@ -48,7 +48,10 @@ export default async function AdminMenuPage({ searchParams }: { searchParams: Pr
 
       {categories?.map((category) => (
         <section key={category.key} className="admin-category" aria-labelledby={`category-${category.key}`}>
-          <h2 id={`category-${category.key}`}>{category.label}</h2>
+          <h2 id={`category-${category.key}`}>{category.legacy ? `${category.label} (à reclasser)` : category.label}</h2>
+          {category.legacy && (
+            <p className="admin-hint">Cette catégorie n’existe plus. Modifiez chaque élément pour lui choisir sa nouvelle catégorie.</p>
+          )}
           {category.items.length === 0 ? (
             <p className="admin-empty">Aucun élément.</p>
           ) : (

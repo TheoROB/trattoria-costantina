@@ -1,7 +1,7 @@
 import 'server-only'
 import type mysql from 'mysql2/promise'
 import { getPool } from '@/lib/db'
-import { isMenuCategoryKey } from './categories'
+import { isStoredCategoryKey } from './categories'
 import { groupByCategory, type MenuCategoryGroup, type PublicMenuItem } from './menu'
 
 export type PublicMenu = { status: 'ok'; categories: MenuCategoryGroup[] } | { status: 'unavailable' }
@@ -15,7 +15,7 @@ export async function readPublicMenu(pool: mysql.Pool): Promise<PublicMenu> {
         ORDER BY position, id`,
     )
     const items: PublicMenuItem[] = rows
-      .filter((r) => isMenuCategoryKey(r.category_key))
+      .filter((r) => isStoredCategoryKey(r.category_key))
       .map((r) => ({
         id: r.id,
         categoryKey: r.category_key,

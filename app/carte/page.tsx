@@ -6,7 +6,7 @@ import { getPublicMenu } from '@/lib/menu/queries'
 
 export const metadata: Metadata = {
   title: 'La carte — Trattoria Costantina, Hénin-Beaumont',
-  description: 'La carte de la Trattoria Costantina à Hénin-Beaumont : antipasti, pâtes et plats, pizzas, desserts et boissons.',
+  description: 'La carte de la Trattoria Costantina à Hénin-Beaumont : antipasti, pasta, pizza napoletana, desserts, spritz, apéritifs, bières, vins, digestifs et boissons sans alcool.',
 }
 
 export default async function CartePage() {

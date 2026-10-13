@@ -16,7 +16,8 @@
     "test:integration": "node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --project integration",
     "db:up": "docker compose up -d db",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.mts",
-    "admin:user": "node --env-file-if-exists=.env.local scripts/admin-user.mts"
+    "admin:user": "node --env-file-if-exists=.env.local scripts/admin-user.mts",
+    "menu:recategorize": "node --env-file-if-exists=.env.local scripts/menu-recategorize.mts"
   },
   "dependencies": {
     "@node-rs/argon2": "2.2.2",
