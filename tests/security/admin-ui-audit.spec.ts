@@ -65,7 +65,7 @@ test('admin dashboard exposes the contracted controls and category order', async
   await expect(reservations).toContainText('Les réservations sont gérées via DISH Reservation.')
 })
 
-// Lot D2: one photo input, restricted to JPEG/PNG/WebP (the server checks the decoded format again).
+// Lot D2: one photo input. Any image can be chosen: the browser prepares it, the server decodes it again.
 test('item forms expose only the contracted fields and a single restricted photo input', async ({ page }) => {
   await page.goto('/admin/menu/new')
 
@@ -79,7 +79,7 @@ test('item forms expose only the contracted fields and a single restricted photo
   const files = page.locator('input[type="file"]')
   await expect(files).toHaveCount(1)
   await expect(files).toHaveAttribute('name', 'photo')
-  await expect(files).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+  await expect(files).toHaveAttribute('accept', 'image/*')
   await expect(files).not.toHaveAttribute('multiple', /.*/)
 })
 

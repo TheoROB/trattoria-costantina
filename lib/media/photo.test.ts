@@ -99,8 +99,11 @@ describe('processMenuPhoto', () => {
     await expectRejected(await solid(10000, 5001).jpeg({ quality: 10 }).toBuffer(), 'too_many_pixels')
   })
 
-  it('rejects images smaller than the largest variant', async () => {
-    await expectRejected(await solid(1000, 300).jpeg().toBuffer(), 'too_small')
+  it('rejects images whose shortest side is under 200 px, and upscales the ones just above', async () => {
+    await expectRejected(await solid(1000, 199).jpeg().toBuffer(), 'too_small')
+    const result = await processMenuPhoto(await solid(260, 200).jpeg().toBuffer())
+    if (!result.ok) throw new Error(result.error)
+    expect(result.variants.map((v) => v.size)).toEqual([...PHOTO_SIZES])
   })
 
   it('rejects an empty buffer', async () => {

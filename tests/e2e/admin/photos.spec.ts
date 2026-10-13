@@ -18,7 +18,15 @@ const MENU_DIR = path.join(E2E_MEDIA_ROOT, 'menu')
 const NAME = 'Pizza Photo Test'
 
 type Upload = { name: string; mimeType: string; buffer: Buffer }
-const files: Record<'jpeg' | 'png' | 'webp' | 'small' | 'svg' | 'fakeJpg' | 'heic', Upload> = {} as never
+type Fixture = 'jpeg' | 'png' | 'webp' | 'iphone' | 'huge' | 'sideways' | 'transparent' | 'heic' | 'justBigEnough' | 'small' | 'svg' | 'realSvg' | 'fakeJpg' | 'fakeHeic'
+const files: Record<Fixture, Upload> = {} as never
+
+// Left half red, right half blue.
+async function halves(width: number, height: number) {
+  const half = Math.round(width / 2)
+  const blue = await sharp({ create: { width: width - half, height, channels: 3, background: '#0000ff' } }).png().toBuffer()
+  return sharp({ create: { width, height, channels: 3, background: '#ff0000' } }).composite([{ input: blue, left: half, top: 0 }])
+}
 
 test.beforeAll(async () => {
   const base = () => sharp({ create: { width: 900, height: 700, channels: 3, background: '#c47a3a' } })
@@ -29,19 +37,75 @@ test.beforeAll(async () => {
   }
   files.png = { name: 'photo.png', mimeType: 'image/png', buffer: await base().png().toBuffer() }
   files.webp = { name: 'photo.webp', mimeType: 'image/webp', buffer: await base().webp().toBuffer() }
-  files.small = { name: 'small.jpg', mimeType: 'image/jpeg', buffer: await sharp({ create: { width: 200, height: 200, channels: 3, background: '#fff' } }).jpeg().toBuffer() }
+  // A 12 MP phone photo: grain makes it weigh what a real one does, EXIF says "rotate 90°" and carries a location.
+  files.iphone = {
+    name: 'IMG_4032.JPG',
+    mimeType: 'image/jpeg',
+    buffer: await sharp({ create: { width: 4032, height: 3024, channels: 3, background: '#b06030', noise: { type: 'gaussian', mean: 128, sigma: 40 } } })
+      .jpeg({ quality: 92 })
+      .withMetadata({ orientation: 6 })
+      .withExif({ IFD0: { Make: 'Apple', Model: 'iPhone 15 Pro', Copyright: 'secret-owner' }, IFD3: { GPSLatitudeRef: 'N', GPSLatitude: '45/1 45/1 0/1' } })
+      .toBuffer(),
+  }
+  files.huge = { name: 'IMG_48MP.jpg', mimeType: 'image/jpeg', buffer: await (await halves(8064, 6048)).jpeg({ quality: 90 }).toBuffer() }
+  // Stored sideways: orientation 6 means "rotate 90° clockwise to display", so red ends up on top.
+  files.sideways = { name: 'sideways.jpg', mimeType: 'image/jpeg', buffer: await (await halves(800, 400)).jpeg().withMetadata({ orientation: 6 }).toBuffer() }
+  files.transparent = { name: 'cutout.png', mimeType: 'image/png', buffer: await sharp({ create: { width: 600, height: 600, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer() }
+  // Real HEVC-coded HEIC (left half red, right half blue), as an iPhone produces. Sharp on the server cannot decode it.
+  files.heic = { name: 'IMG_0002.HEIC', mimeType: 'image/heic', buffer: fs.readFileSync('tests/fixtures/dish-photo.heic') }
+  files.justBigEnough = { name: 'small-ok.jpg', mimeType: 'image/jpeg', buffer: await sharp({ create: { width: 250, height: 200, channels: 3, background: '#c47a3a' } }).jpeg().toBuffer() }
+  files.small = { name: 'small.jpg', mimeType: 'image/jpeg', buffer: await sharp({ create: { width: 150, height: 150, channels: 3, background: '#fff' } }).jpeg().toBuffer() }
   files.svg = {
     name: 'logo.jpg',
     mimeType: 'image/jpeg',
     buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900"><script>alert(1)</script><rect width="900" height="900"/></svg>'),
   }
+  // A genuine SVG with intrinsic dimensions: some browsers could rasterize it, it must still be refused.
+  files.realSvg = {
+    name: 'logo.svg',
+    mimeType: 'image/svg+xml',
+    buffer: Buffer.from('<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900"><rect width="900" height="900" fill="#c47a3a"/></svg>'),
+  }
   files.fakeJpg = { name: 'notes.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('not an image at all') }
-  files.heic = {
-    name: 'IMG_0002.HEIC',
+  files.fakeHeic = {
+    name: 'IMG_0003.HEIC',
     mimeType: 'image/heic',
     buffer: Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypheic'), Buffer.from([0, 0, 0, 0]), Buffer.from('mif1heic'), Buffer.alloc(4000)]),
   }
 })
+
+// Records the photo file the page hands to fetch() for the upload endpoint (Playwright does not expose
+// multipart bodies built from a Blob). Resolves with the next one sent.
+async function captureUploads(page: Page) {
+  const sent: { name: string; type: string; data: Buffer }[] = []
+  await page.exposeBinding('__reportUpload', (_source, name: string, type: string, base64: string) => {
+    sent.push({ name, type, data: Buffer.from(base64, 'base64') })
+  })
+  await page.addInitScript(() => {
+    const original = window.fetch
+    window.fetch = async (input, init) => {
+      const photo = init?.body instanceof FormData ? init.body.get('photo') : null
+      if (photo instanceof File && String(input).endsWith('/photo')) {
+        const bytes = new Uint8Array(await photo.arrayBuffer())
+        let binary = ''
+        for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+        await (window as unknown as { __reportUpload: (...args: string[]) => Promise<void> }).__reportUpload(photo.name, photo.type, btoa(binary))
+      }
+      return original(input, init)
+    }
+  })
+  return async () => {
+    await expect.poll(() => sent.length).toBeGreaterThan(0)
+    return sent.shift()!
+  }
+}
+
+async function pixel(image: Buffer, x: number, y: number) {
+  const { data, info } = await sharp(image).raw().toBuffer({ resolveWithObject: true })
+  const i = (y * info.width + x) * info.channels
+  return [data[i], data[i + 1], data[i + 2]]
+}
+const near = (actual: number[], expected: number[]) => actual.every((v, i) => Math.abs(v - expected[i]) < 40)
 
 async function login(page: Page) {
   await page.goto('/admin/login')
@@ -64,8 +128,13 @@ const variantsOf = (key: string) => [`${key}-160.webp`, `${key}-320.webp`]
 async function editPhoto(page: Page, name: string, upload: Upload) {
   await page.goto('/admin')
   await adminItem(page, name).getByRole('link', { name: 'Modifier' }).click()
-  await page.getByLabel(/photo/i).setInputFiles(upload)
+  await choose(page, upload)
   await page.getByRole('button', { name: 'Enregistrer' }).click()
+}
+
+async function choose(page: Page, upload: Upload) {
+  await page.getByLabel(/photo/i).setInputFiles(upload)
+  await expect(page.getByText('Préparation de la photo…')).toHaveCount(0, { timeout: 30_000 })
 }
 
 async function auditActions(itemId: number) {
@@ -79,7 +148,10 @@ test('creates an item with a JPEG photo, served as metadata-free WebP with long 
   await page.getByLabel('Catégorie').selectOption('pizzas')
   await page.getByLabel('Nom').fill(NAME)
   await page.getByLabel('Prix (€)').fill('12')
-  await page.getByLabel('Photo (facultatif)').setInputFiles(files.jpeg)
+  await expect(page.getByText('Choisissez une photo depuis votre téléphone ou votre ordinateur. Elle sera automatiquement recadrée et optimisée.')).toBeVisible()
+  await expect(page.getByText(/JPEG|WebP|Mo maximum|320/)).toHaveCount(0)
+  await choose(page, files.jpeg)
+  await expect(page.getByText('Photo prête')).toBeVisible()
   await page.getByRole('button', { name: 'Enregistrer' }).click()
   await expect(page).toHaveURL(/\/admin$/)
   await expect(adminItem(page, NAME)).toContainText('Photo')
@@ -132,42 +204,155 @@ test('replaces a photo with a WebP: new URL, old files deleted only after the sw
   expect(await auditActions(after.id)).toEqual(['menu_item.photo_add', 'menu_item.photo_replace'])
 })
 
-test.describe('a refused replacement keeps the current photo and writes no file', () => {
+test.describe('the browser prepares the photo before sending it', () => {
+  test('a 12 MP phone photo is oriented, reduced and stripped before upload', async ({ page }) => {
+    await login(page)
+    const nextUpload = await captureUploads(page)
+    await editPhoto(page, NAME, files.iphone)
+    const sent = await nextUpload()
+    await expect(page).toHaveURL(/\/admin$/)
+    expect([sent.name, sent.type]).toEqual(['photo.jpg', 'image/jpeg'])
+    const meta = await sharp(sent.data).metadata()
+    // Portrait once the EXIF orientation is applied, longest side 2048.
+    expect([meta.format, meta.width, meta.height]).toEqual(['jpeg', 1536, 2048])
+    expect(meta.exif).toBeUndefined()
+    expect(sent.data.includes('secret-owner')).toBe(false)
+    expect(files.iphone.buffer.length).toBeGreaterThan(4 * 1024 * 1024)
+    expect(sent.data.length).toBeLessThan(files.iphone.buffer.length / 3)
+  })
+
+  test('a 48 MP photo is reduced to 2048 px on its longest side', async ({ page }) => {
+    await login(page)
+    const nextUpload = await captureUploads(page)
+    await editPhoto(page, NAME, files.huge)
+    const sent = await nextUpload()
+    await expect(page).toHaveURL(/\/admin$/)
+    const meta = await sharp(sent.data).metadata()
+    expect([meta.format, meta.width, meta.height]).toEqual(['jpeg', 2048, 1536])
+    expect(sent.data.length).toBeLessThan(3 * 1024 * 1024)
+  })
+
+  test('the EXIF orientation is applied in the browser and on the final photo', async ({ page, request }) => {
+    await login(page)
+    const nextUpload = await captureUploads(page)
+    await editPhoto(page, NAME, files.sideways)
+    const sent = await nextUpload()
+    await expect(page).toHaveURL(/\/admin$/)
+    const meta = await sharp(sent.data).metadata()
+    expect([meta.width, meta.height, meta.orientation]).toEqual([400, 800, undefined])
+    expect(near(await pixel(sent.data, 200, 50), [255, 0, 0])).toBe(true)
+    expect(near(await pixel(sent.data, 200, 750), [0, 0, 255])).toBe(true)
+    // The square crop keeps the middle: red on top, blue below.
+    const { image_key: key } = await itemRow(NAME)
+    const variant = await (await request.get(`/media/menu/${key}-320.webp`)).body()
+    expect(near(await pixel(variant, 160, 20), [255, 0, 0])).toBe(true)
+    expect(near(await pixel(variant, 160, 300), [0, 0, 255])).toBe(true)
+  })
+
+  test('transparent areas become white, not black', async ({ page }) => {
+    await login(page)
+    const nextUpload = await captureUploads(page)
+    await editPhoto(page, NAME, files.transparent)
+    const sent = await nextUpload()
+    await expect(page).toHaveURL(/\/admin$/)
+    expect(near(await pixel(sent.data, 10, 10), [255, 255, 255])).toBe(true)
+  })
+
+  test('a HEIC photo is converted in the browser, the converter being loaded only then', async ({ page, request }) => {
+    const nextUpload = await captureUploads(page)
+    await login(page)
+    // Downloaded scripts over 1 MB (the converter then also runs in a blob: worker, not downloaded again).
+    const bigScripts: string[] = []
+    page.on('response', async (r) => {
+      if (r.url().startsWith('http') && r.request().resourceType() === 'script' && (await r.body()).length > 1024 * 1024) bigScripts.push(r.url())
+    })
+    await page.goto('/admin')
+    await adminItem(page, NAME).getByRole('link', { name: 'Modifier' }).click()
+    await choose(page, files.webp)
+    expect(bigScripts).toEqual([])
+
+    await choose(page, files.heic)
+    await expect(page.getByText('Photo prête')).toBeVisible()
+    await expect.poll(() => bigScripts.length).toBe(1)
+    await page.getByRole('button', { name: 'Enregistrer' }).click()
+    const sent = await nextUpload()
+    await expect(page).toHaveURL(/\/admin$/)
+    const meta = await sharp(sent.data).metadata()
+    expect([meta.format, meta.width, meta.height]).toEqual(['jpeg', 1600, 1200])
+    const { id, image_key: key } = await itemRow(NAME)
+    const variant = await (await request.get(`/media/menu/${key}-320.webp`)).body()
+    expect(near(await pixel(variant, 20, 160), [208, 16, 16])).toBe(true)
+    expect(near(await pixel(variant, 300, 160), [16, 48, 208])).toBe(true)
+    expect((await auditActions(id)).at(-1)).toBe('menu_item.photo_replace')
+  })
+
+  test('a small but usable photo is accepted', async ({ page }) => {
+    await login(page)
+    const before = await itemRow(NAME)
+    await editPhoto(page, NAME, files.justBigEnough)
+    await expect(page).toHaveURL(/\/admin$/)
+    expect((await itemRow(NAME)).image_key).not.toBe(before.image_key)
+  })
+})
+
+test.describe('a photo the browser cannot use is explained and never sent', () => {
   for (const [label, file, message] of [
-    ['SVG renamed .jpg', 'svg', /Format non pris en charge/],
-    ['text file renamed .jpg', 'fakeJpg', /Format non pris en charge/],
-    ['HEIC', 'heic', /HEIC ne sont pas prises en charge/],
+    ['SVG file', 'realSvg', /n’a pas pu être lue/],
+    ['SVG renamed .jpg', 'svg', /n’a pas pu être lue/],
+    ['text file renamed .jpg', 'fakeJpg', /n’a pas pu être lue/],
+    ['damaged HEIC', 'fakeHeic', /n’a pas pu être convertie/],
     ['too small', 'small', /trop petite/],
+    ['exceptionally large file', 'big', /exceptionnellement volumineuse/],
   ] as const) {
-    test(label, async ({ page, request }) => {
+    test(label, async ({ page }) => {
       await login(page)
       const before = await itemRow(NAME)
       const filesBefore = mediaFiles()
-      await editPhoto(page, NAME, files[file])
-      await expect(page).toHaveURL(new RegExp(`/admin/menu/${before.id}\\?photo=`))
-      await expect(page.locator('#photo-upload-error')).toHaveText(message)
-      await expect(page.getByLabel('Nom')).toHaveValue(NAME)
+      await page.goto(`/admin/menu/${before.id}`)
+      const upload = file === 'big' ? { name: 'huge.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(40 * 1024 * 1024 + 1) } : files[file]
+      await choose(page, upload)
+      await expect(page.locator('#item-photo-error')).toHaveText(message)
+      await expect(page.getByText(/HEIC|WebP|codec/)).toHaveCount(0)
+      let posted = false
+      page.on('request', (r) => (posted ||= r.method() === 'POST'))
+      await page.getByRole('button', { name: 'Enregistrer' }).click()
+      await page.waitForTimeout(300)
+      expect(posted).toBe(false)
       expect(await itemRow(NAME)).toEqual(before)
       expect(mediaFiles()).toEqual(filesBefore)
-      expect((await request.get(`/media/menu/${before.image_key}-160.webp`)).status()).toBe(200)
+
+      // Clearing the field lets the rest of the form be saved.
+      await page.getByLabel(/photo/i).setInputFiles([])
+      await expect(page.locator('#item-photo-error')).toHaveCount(0)
+      await page.getByRole('button', { name: 'Enregistrer' }).click()
+      await expect(page).toHaveURL(/\/admin$/)
+      expect(await itemRow(NAME)).toEqual(before)
     })
   }
 })
 
-test('the browser refuses a file over 10 MB before sending it', async ({ page }) => {
+test('an SVG is refused even by a browser able to rasterize it', async ({ page }) => {
+  // Simulates such a browser: every decode succeeds with a usable 900x900 picture.
+  await page.addInitScript(() => {
+    const decode = window.createImageBitmap.bind(window)
+    window.createImageBitmap = ((_source: ImageBitmapSource, options?: ImageBitmapOptions) => decode(new ImageData(900, 900), options)) as typeof createImageBitmap
+  })
   await login(page)
   const before = await itemRow(NAME)
-  await page.goto('/admin')
-  await adminItem(page, NAME).getByRole('link', { name: 'Modifier' }).click()
-  const input = page.getByLabel(/photo/i)
-  await input.setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(10 * 1024 * 1024 + 1) })
-  expect(await input.evaluate((el: HTMLInputElement) => el.validationMessage)).toContain('10 Mo')
+  await page.goto(`/admin/menu/${before.id}`)
+  await choose(page, files.realSvg)
+  await expect(page.locator('#item-photo-error')).toHaveText(/n’a pas pu être lue/)
   let posted = false
   page.on('request', (r) => (posted ||= r.method() === 'POST'))
   await page.getByRole('button', { name: 'Enregistrer' }).click()
   await page.waitForTimeout(300)
   expect(posted).toBe(false)
   expect(await itemRow(NAME)).toEqual(before)
+
+  // Control: the same simulated browser accepts a real photo, so the refusal above comes from the SVG check.
+  await choose(page, files.jpeg)
+  await expect(page.locator('#item-photo-error')).toHaveCount(0)
+  await expect(page.getByText('Photo prête', { exact: false })).toBeVisible()
 })
 
 test('uploads are rate limited per account', async ({ page }) => {
@@ -233,7 +418,11 @@ test.describe('the photo upload endpoint', () => {
       ['extra field', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', type: 'image/jpeg', data: files.jpeg.buffer }, { name: 'image_key', data: 'f'.repeat(32) }]).body }), 400],
       ['two photos', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', data: files.jpeg.buffer }, { name: 'photo', filename: 'b.jpg', data: files.jpeg.buffer }]).body }), 400],
       ['text instead of a file', post(request, baseURL!, { token, body: multipart([{ name: 'photo', data: 'not a file' }]).body }), 400],
+      // The browser is not trusted: payloads it would never send are refused by the server too.
       ['SVG', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', type: 'image/jpeg', data: files.svg.buffer }]).body }), 422],
+      ['text renamed .jpg', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'a.jpg', type: 'image/jpeg', data: files.fakeJpg.buffer }]).body }), 422],
+      ['real HEIC sent as JPEG', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'photo.jpg', type: 'image/jpeg', data: files.heic.buffer }]).body }), 422],
+      ['too small', post(request, baseURL!, { token, body: multipart([{ name: 'photo', filename: 'photo.jpg', type: 'image/jpeg', data: files.small.buffer }]).body }), 422],
     ]
     for (const [label, response, status] of cases) {
       const r = await response
@@ -354,7 +543,8 @@ test.describe('on a phone', () => {
     const before = await itemRow(NAME)
     await page.goto(`/admin/menu/${before.id}`)
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
-    await page.getByLabel('Remplacer la photo (facultatif)').setInputFiles(files.jpeg)
+    await choose(page, files.iphone)
+    await expect(page.getByText('Photo prête')).toBeVisible()
     await page.getByRole('button', { name: 'Enregistrer' }).tap()
     await expect(page).toHaveURL(/\/admin$/)
     expect((await itemRow(NAME)).image_key).not.toBe(before.image_key)

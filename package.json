@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@node-rs/argon2": "2.2.2",
+    "heic-to": "1.6.6",
     "mysql2": "3.24.5",
     "next": "16.3.8",
     "react": "19.3.0",

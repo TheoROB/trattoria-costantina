@@ -1,6 +1,6 @@
 import 'server-only'
 import sharp, { type Metadata } from 'sharp'
-import { MAX_UPLOAD_BYTES, PHOTO_SIZES, type PhotoSize } from './limits'
+import { MAX_UPLOAD_BYTES, MIN_PHOTO_SIDE, PHOTO_SIZES, type PhotoSize } from './limits'
 
 export { MAX_UPLOAD_BYTES, PHOTO_SIZES }
 
@@ -36,7 +36,7 @@ async function process(input: Buffer): Promise<PhotoResult> {
   }
   if (!ACCEPTED_FORMATS.has(meta.format)) return { ok: false, error: 'unsupported' }
   if (meta.width * meta.height > MAX_PIXELS) return { ok: false, error: 'too_many_pixels' }
-  if (Math.min(meta.width, meta.height) < PHOTO_SIZES[PHOTO_SIZES.length - 1]) return { ok: false, error: 'too_small' }
+  if (Math.min(meta.width, meta.height) < MIN_PHOTO_SIDE) return { ok: false, error: 'too_small' }
 
   try {
     // rotate() applies the EXIF orientation. Output metadata (EXIF, GPS, ICC, XMP) is dropped by default

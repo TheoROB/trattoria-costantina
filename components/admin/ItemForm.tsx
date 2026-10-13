@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useActionState, useRef, type ChangeEvent } from 'react'
+import { useActionState, useRef, useState, type ChangeEvent } from 'react'
 import type { ItemFormState } from '@/app/admin/menu-actions'
 import type { AdminMenuItem } from '@/lib/menu/admin'
 import type { FieldName } from '@/lib/menu/admin-input'
-import { MAX_UPLOAD_BYTES, PHOTO_ACCEPT } from '@/lib/media/limits'
+import { PHOTO_ACCEPT } from '@/lib/media/limits'
+import { PREPARE_ERRORS } from '@/lib/media/messages'
+import { preparePhoto } from '@/lib/media/prepare-photo'
 import { MENU_CATEGORIES } from '@/lib/menu/categories'
 import { centsToInput } from '@/lib/menu/price'
 
@@ -20,19 +22,13 @@ function FieldError({ field, errors }: { field: FieldName; errors?: ItemFormStat
   return message ? <p className="admin-field-error" id={`item-${field}-error`}>{message}</p> : null
 }
 
-// Checked again on the server; here it only avoids sending a file the server would refuse.
-function checkPhotoSize(event: ChangeEvent<HTMLInputElement>) {
-  const input = event.currentTarget
-  const file = input.files?.[0]
-  input.setCustomValidity(file && file.size > MAX_UPLOAD_BYTES ? 'La photo dépasse 10 Mo : choisissez une image plus légère.' : '')
-  input.reportValidity()
-}
+type PhotoStatus = { status: 'none' | 'preparing' | 'ready' } | { status: 'error'; message: string }
 
 // Sent to the dedicated upload endpoint once the text fields are saved. On failure the item page shows
 // why (?photo=<code>): the text changes are already saved at that point.
-async function uploadPhoto(id: number, file: File) {
+async function uploadPhoto(id: number, photo: Blob) {
   const body = new FormData()
-  body.set('photo', file)
+  body.set('photo', photo, 'photo.jpg')
   try {
     const response = await fetch(`/api/admin/menu/${id}/photo`, { method: 'POST', body })
     if (response.ok) return null
@@ -45,15 +41,45 @@ async function uploadPhoto(id: number, file: File) {
 
 export function ItemForm({ action, item }: Props) {
   const router = useRouter()
-  const photoInput = useRef<HTMLInputElement>(null)
+  // The photo actually sent: the chosen file once oriented, resized and re-encoded by the browser.
+  const preparedPhoto = useRef<Blob | null>(null)
+  const preparation = useRef(0)
+  const [photo, setPhoto] = useState<PhotoStatus>({ status: 'none' })
+
+  async function choosePhoto(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget
+    const file = input.files?.[0]
+    const run = ++preparation.current
+    preparedPhoto.current = null
+    input.setCustomValidity('')
+    if (!file) return setPhoto({ status: 'none' })
+    setPhoto({ status: 'preparing' })
+    const result = await preparePhoto(file)
+    // Another file was chosen in the meantime.
+    if (run !== preparation.current) return
+    if (result.ok) {
+      preparedPhoto.current = result.blob
+      setPhoto({ status: 'ready' })
+    } else {
+      // Blocks the submission until another photo is chosen or the field is cleared.
+      input.setCustomValidity(PREPARE_ERRORS[result.error])
+      setPhoto({ status: 'error', message: PREPARE_ERRORS[result.error] })
+    }
+  }
+
   const [state, formAction, pending] = useActionState(async (previous: ItemFormState, formData: FormData) => {
     // The file never goes through the Server Action (default 1 MB body limit).
     formData.delete('photo')
-    const file = photoInput.current?.files?.[0]
-    if (file) formData.set('photoPending', '1')
+    const prepared = preparedPhoto.current
+    if (prepared) formData.set('photoPending', '1')
     const result = await action(previous, formData)
-    if (!file || result.error || !result.savedId) return result
-    const error = await uploadPhoto(result.savedId, file)
+    if (result.error) {
+      // The form is shown again with an empty photo field.
+      preparedPhoto.current = null
+      setPhoto({ status: 'none' })
+    }
+    if (!prepared || result.error || !result.savedId) return result
+    const error = await uploadPhoto(result.savedId, prepared)
     router.push(error ? `/admin/menu/${result.savedId}?photo=${encodeURIComponent(error)}` : '/admin')
     router.refresh()
     return result
@@ -99,9 +125,17 @@ export function ItemForm({ action, item }: Props) {
 
       <div className="admin-field">
         <label htmlFor="item-photo">{item?.imageKey ? 'Remplacer la photo' : 'Photo'} (facultatif)</label>
-        <input ref={photoInput} id="item-photo" type="file" name="photo" accept={PHOTO_ACCEPT} onChange={checkPhotoSize}
-          aria-describedby="item-photo-hint" />
-        <p className="admin-hint" id="item-photo-hint">JPEG, PNG ou WebP, 10 Mo maximum, au moins 320 × 320 pixels. La photo est recadrée en carré.</p>
+        <input id="item-photo" type="file" name="photo" accept={PHOTO_ACCEPT} onChange={choosePhoto}
+          aria-describedby={photo.status === 'error' ? 'item-photo-error' : 'item-photo-hint'}
+          aria-invalid={photo.status === 'error' || undefined} />
+        <p className="admin-hint" id="item-photo-hint">
+          Choisissez une photo depuis votre téléphone ou votre ordinateur. Elle sera automatiquement recadrée et optimisée.
+        </p>
+        <p className="admin-hint" aria-live="polite">
+          {photo.status === 'preparing' && 'Préparation de la photo…'}
+          {photo.status === 'ready' && 'Photo prête : elle sera enregistrée avec l’élément.'}
+        </p>
+        {photo.status === 'error' && <p className="admin-field-error" id="item-photo-error" role="alert">{photo.message}</p>}
       </div>
 
       <label className="admin-check">
@@ -114,7 +148,7 @@ export function ItemForm({ action, item }: Props) {
       </label>
 
       <div className="admin-form-actions">
-        <button type="submit" className="admin-button admin-button-primary" disabled={pending}>Enregistrer</button>
+        <button type="submit" className="admin-button admin-button-primary" disabled={pending || photo.status === 'preparing'}>Enregistrer</button>
         <Link href="/admin" className="admin-button admin-button-ghost">Annuler</Link>
       </div>
     </form>
