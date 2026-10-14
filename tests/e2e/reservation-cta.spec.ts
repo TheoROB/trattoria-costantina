@@ -141,3 +141,21 @@ for (const viewport of [
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width)
   })
 }
+
+for (const viewport of [
+  { name: 'phone', width: 390, height: 844 },
+  { name: 'desktop', width: 1280, height: 800 },
+]) {
+  test(`does not cover the end of the footer on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize(viewport)
+    await page.goto('/mentions-legales')
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    const last = page.locator('.footer-bottom p').last()
+    await expect(last).toBeInViewport()
+    const [button, text] = await Promise.all([trigger(page).boundingBox(), last.boundingBox()])
+    const overlaps =
+      button!.x < text!.x + text!.width && text!.x < button!.x + button!.width &&
+      button!.y < text!.y + text!.height && text!.y < button!.y + button!.height
+    expect(overlaps).toBe(false)
+  })
+}

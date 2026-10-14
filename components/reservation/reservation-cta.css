@@ -23,6 +23,9 @@
   transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s 0.25s;
 }
 
+/* Room under the last footer line, so the button never covers it once scrolled to the bottom. */
+.footer .footer-bottom { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+
 /* Scroll lock: the page stays where it was while the dialog is open. */
 html:has(.reservation-cta-dialog[open]) { overflow: hidden; }
 
