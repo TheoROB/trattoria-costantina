@@ -35,6 +35,7 @@ test('all mockup sections render in order', async ({ page }) => {
     'reservation',
     'section-famille',
     'trouver',
+    'contact',
     'footer',
   ])
 })

@@ -1,4 +1,5 @@
 import { Carte } from '@/components/sections/Carte'
+import { Contact } from '@/components/sections/Contact'
 import { Famille } from '@/components/sections/Famille'
 import { Footer } from '@/components/sections/Footer'
 import { Hero } from '@/components/sections/Hero'
@@ -17,6 +18,7 @@ export default function HomePage() {
       <Reservation />
       <Famille />
       <Trouver />
+      <Contact />
       <Footer />
     </>
   )
