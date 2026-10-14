@@ -31,18 +31,8 @@
 .page-banner {
   background: var(--brown);
   color: var(--cream);
-  padding: calc(var(--nav-height) + 4rem) 0 4rem;
+  padding: calc(var(--nav-height) + 2.5rem) 0 2.75rem;
   text-align: center;
 }
 .page-banner h1 { color: var(--cream); }
 .page-banner .section-subtitle { color: rgba(250, 246, 240, 0.75); }
-
-/* /carte uses h2 for categories (h1 is the page title); same look as the home h3. */
-.section-carte-full .menu-category h2 {
-  font-family: var(--font-serif);
-  font-size: 1.3rem;
-  font-weight: 400;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--cream-border);
-}

@@ -147,7 +147,7 @@ test('HTML entered in a visible description is rendered as text on the public me
     page.getByRole('button', { name: 'Enregistrer' }).click(),
   ])
 
-  await page.goto('/carte')
+  await page.goto('/carte#pizzas')
 
   await expect(page.getByText(description)).toBeVisible()
   expect(await page.locator('body').getAttribute('data-injected')).toBeNull()

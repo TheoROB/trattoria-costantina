@@ -161,7 +161,7 @@ test('creates an item with a JPEG photo, served as metadata-free WebP with long 
   expect(mediaFiles()).toEqual(expect.arrayContaining(variantsOf(key!)))
   expect(await auditActions(id)).toEqual(['menu_item.photo_add'])
 
-  await page.goto('/carte')
+  await page.goto('/carte#pizzas')
   const thumb = page.locator('.menu-items li').filter({ hasText: NAME }).locator('img.menu-thumb')
   await expect(thumb).toHaveAttribute('src', `/media/menu/${key}-160.webp`)
   await expect(thumb).toHaveAttribute('alt', '')
@@ -548,7 +548,7 @@ test.describe('on a phone', () => {
     await page.getByRole('button', { name: 'Enregistrer' }).tap()
     await expect(page).toHaveURL(/\/admin$/)
     expect((await itemRow(NAME)).image_key).not.toBe(before.image_key)
-    await page.goto('/carte')
+    await page.goto('/carte#pizzas')
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
     await expect(page.locator('.menu-items li').filter({ hasText: NAME }).locator('img.menu-thumb')).toBeVisible()
   })

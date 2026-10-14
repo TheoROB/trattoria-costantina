@@ -97,7 +97,7 @@ test('hides and shows an item on the public menu', async ({ page }) => {
   await page.goto('/admin')
   await adminItem(page, 'Tiramisù').getByRole('button', { name: 'Afficher' }).click()
   await expect(adminItem(page, 'Tiramisù')).not.toContainText('Masqué')
-  await page.goto('/carte')
+  await page.goto('/carte#desserts')
   await expect(publicItem(page, 'Tiramisù')).toBeVisible()
 })
 
@@ -128,7 +128,7 @@ test('reorders items within a category, reflected on /carte', async ({ page }) =
   await expect.poll(() => pizzaOrder(page)).toEqual(swapped)
   await expect(adminItem(page, 'Pizza Test 2')).toContainText(`Position ${first + 1}`)
 
-  await page.goto('/carte')
+  await page.goto('/carte#pizzas')
   const publicPizzas = page.locator('.menu-category').filter({ has: page.getByRole('heading', { name: 'Pizza Napoletana' }) })
   const names = await publicPizzas.locator('.menu-name').allTextContents()
   expect(names.indexOf('Pizza Test 2')).toBeLessThan(names.indexOf('Pizza Test 1'))

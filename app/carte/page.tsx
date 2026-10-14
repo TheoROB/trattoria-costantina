@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { MenuCategories, MenuStatus } from '@/components/menu/MenuCategories'
+import { CarteMenu } from '@/components/menu/CarteMenu'
+import { MenuStatus } from '@/components/menu/MenuCategories'
 import { Footer } from '@/components/sections/Footer'
 import { Navbar } from '@/components/sections/Navbar'
 import { getPublicMenu } from '@/lib/menu/queries'
@@ -26,7 +27,7 @@ export default async function CartePage() {
         <section className="section-specialites section-carte-full">
           <div className="container">
             {categories.length > 0 ? (
-              <MenuCategories categories={categories} headingLevel="h2" />
+              <CarteMenu categories={categories} />
             ) : (
               <MenuStatus unavailable={menu.status === 'unavailable'} />
             )}
