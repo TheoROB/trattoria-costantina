@@ -30,7 +30,8 @@ export const staticSecurityHeaders = [
   { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
+    // No `interest-cohort`: FLoC is gone and Chrome reports the unknown feature as a header error.
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
   },
 ]
 
