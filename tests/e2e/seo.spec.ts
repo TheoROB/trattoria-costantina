@@ -78,8 +78,7 @@ test('the home page carries no unsourced marketing claim', async ({ request }) =
   }
 })
 
-// TODO(orchestrator): enable once <RestaurantJsonLd /> is mounted in app/page.tsx.
-test.fixme('the home page exposes the Restaurant structured data', async ({ page, baseURL }) => {
+test('the home page exposes the Restaurant structured data', async ({ page, baseURL }) => {
   await page.goto('/')
   const blocks = await page.locator('script[type="application/ld+json"]').allTextContents()
   const restaurant = blocks.map((b) => JSON.parse(b)).find((d) => d['@type'] === 'Restaurant')

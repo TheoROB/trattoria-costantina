@@ -35,7 +35,7 @@ export function Footer() {
             <li><Link href="/#histoire">Notre Histoire</Link></li>
             <li><Link href="/#specialites">La Carte</Link></li>
             <li><Link href="/#reservation">Réserver</Link></li>
-            <li><Link href="/#trouver">Contact</Link></li>
+            <li><Link href="/#contact">Contact</Link></li>
           </ul>
         </div>
         <div className="footer-nav-col">

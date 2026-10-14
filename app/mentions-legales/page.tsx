@@ -51,8 +51,8 @@ export default function MentionsLegalesPage() {
           nécessaire à la connexion.
         </p>
         <p>
-          Le module de réservation en ligne est fourni par DISH (reservation.dish.co) et intégré à la page
-          d&apos;accueil : son utilisation relève de la politique de confidentialité et de cookies de ce prestataire.
+          Le module de réservation en ligne est fourni par DISH (reservation.dish.co) et proposé sur les
+          pages du site : son utilisation relève de la politique de confidentialité et de cookies de ce prestataire.
         </p>
       </main>
       <Footer />

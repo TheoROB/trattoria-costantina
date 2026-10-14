@@ -29,7 +29,7 @@ export function Navbar({ solid = false }: { solid?: boolean }) {
             <li><Link href="/#histoire" onClick={close}>Notre Histoire</Link></li>
             <li><Link href="/#specialites" onClick={close}>La Carte</Link></li>
             <li><Link href="/#reservation" onClick={close}>Réserver</Link></li>
-            <li><Link href="/#trouver" onClick={close}>Contact</Link></li>
+            <li><Link href="/#contact" onClick={close}>Contact</Link></li>
           </ul>
           <Link href="/#reservation" className="btn btn-primary nav-cta">Réserver</Link>
           <button className="nav-toggle" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
