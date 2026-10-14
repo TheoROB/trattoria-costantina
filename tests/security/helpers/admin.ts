@@ -55,7 +55,8 @@ export async function fillItemForm(
   await page.getByLabel('Nom').fill(values.name)
   await page.getByLabel('Description').fill(values.description ?? 'Description for a security test item')
   await page.getByLabel('Prix (€)').fill(values.price ?? '12,50')
-  await page.getByLabel('Disponible').setChecked(values.available ?? true)
+  // Exact: the list behind the item panel has "Disponible. Marquer indisponible" buttons.
+  await page.getByLabel('Disponible', { exact: true }).setChecked(values.available ?? true)
   await page.getByLabel('Visible sur le site').setChecked(values.visible ?? true)
 }
 

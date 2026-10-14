@@ -84,7 +84,7 @@ describe('menu item photos', () => {
   it('reports the photo of a deleted item so its files can be removed', async () => {
     const key = newImageKey()
     const { id } = await createWithPhoto(key)
-    expect(await menu.deleteMenuItem(pool, julien, id)).toEqual({ status: 'ok', removedImageKey: key })
+    expect(await menu.deleteMenuItem(pool, julien, id)).toEqual({ status: 'ok', removedImageKey: key, categoryKey: 'pizzas' })
     expect(await menu.removeMenuItemPhoto(pool, julien, id)).toEqual({ status: 'not_found' })
     expect(await menu.setMenuItemPhoto(pool, julien, id, newImageKey())).toEqual({ status: 'not_found' })
   })

@@ -40,15 +40,15 @@ test.afterEach(async () => {
 })
 
 test('admin dashboard exposes the contracted controls and category order', async ({ page }) => {
-  await page.goto('/admin')
+  await page.goto('/admin?categorie=pizzas')
 
   await expect(page.getByRole('heading', { level: 1, name: 'La carte' })).toBeVisible()
   const categoryNames = [
     'Antipasti', 'Pasta', 'Pizza Napoletana', 'Desserts', 'Spritz', 'Apéritifs', 'Bières pression', 'Bières bouteille',
     'Vins', 'Digestifs', 'Sans alcool',
   ]
-  const headings = await page.getByRole('heading', { level: 2 }).allTextContents()
-  expect(headings.filter((heading) => categoryNames.includes(heading))).toEqual(categoryNames)
+  const tabs = await page.getByRole('navigation', { name: 'Sections de la carte' }).getByRole('link').allTextContents()
+  expect(tabs.map((tab) => tab.replace(/ · \d+$/, '')).filter((tab) => categoryNames.includes(tab))).toEqual(categoryNames)
   const item = page.locator('li[data-item-id]').filter({ hasText: 'Pizza Test 1' })
   await expect(item).toContainText('11')
   await expect(item.getByRole('button', { name: 'Monter' })).toBeVisible()
@@ -56,7 +56,7 @@ test('admin dashboard exposes the contracted controls and category order', async
   await expect(item.getByRole('button', { name: /Masquer|Afficher/ })).toBeVisible()
   await expect(item.getByRole('button', { name: /Marquer (?:in)?disponible/ })).toBeVisible()
   await expect(item.getByRole('link', { name: 'Modifier' })).toHaveAttribute('href', /\/admin\/menu\/\d+$/)
-  await expect(page.getByRole('link', { name: 'Nouvel élément' })).toHaveAttribute('href', '/admin/menu/new')
+  await expect(page.getByRole('link', { name: 'Ajouter un élément' })).toHaveAttribute('href', '/admin/menu/new?categorie=pizzas')
   await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
   const reservations = page.getByText('Réservations').locator('..')
   await expect(reservations).toContainText('Les réservations sont gérées via DISH Reservation.')
@@ -70,7 +70,7 @@ test('item forms expose only the contracted fields and a single restricted photo
   await expect(page.getByLabel('Nom')).toBeVisible()
   await expect(page.getByLabel('Description')).toBeVisible()
   await expect(page.getByLabel('Prix (€)')).toHaveAttribute('type', 'text')
-  await expect(page.getByLabel('Disponible')).toHaveAttribute('type', 'checkbox')
+  await expect(page.getByLabel('Disponible', { exact: true })).toHaveAttribute('type', 'checkbox')
   await expect(page.getByLabel('Visible sur le site')).toHaveAttribute('type', 'checkbox')
   await expect(page.getByRole('button', { name: 'Enregistrer' })).toBeVisible()
   const files = page.locator('input[type="file"]')

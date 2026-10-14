@@ -125,15 +125,19 @@ async function itemRow(name: string) {
 const mediaFiles = () => (fs.existsSync(MENU_DIR) ? fs.readdirSync(MENU_DIR).sort() : [])
 const variantsOf = (key: string) => [`${key}-160.webp`, `${key}-320.webp`]
 
+// Every item of these tests is a pizza.
 async function editPhoto(page: Page, name: string, upload: Upload) {
-  await page.goto('/admin')
+  await page.goto('/admin?categorie=pizzas')
   await adminItem(page, name).getByRole('link', { name: 'Modifier' }).click()
   await choose(page, upload)
   await page.getByRole('button', { name: 'Enregistrer' }).click()
 }
 
+// The panel itself is labelled by its title ("Modifier « Pizza Photo Test »").
+const photoField = (page: Page) => page.getByLabel(/^(Photo|Remplacer la photo) \(facultatif\)$/)
+
 async function choose(page: Page, upload: Upload) {
-  await page.getByLabel(/photo/i).setInputFiles(upload)
+  await photoField(page).setInputFiles(upload)
   await expect(page.getByText('Préparation de la photo…')).toHaveCount(0, { timeout: 30_000 })
 }
 
@@ -153,8 +157,8 @@ test('creates an item with a JPEG photo, served as metadata-free WebP with long 
   await choose(page, files.jpeg)
   await expect(page.getByText('Photo prête')).toBeVisible()
   await page.getByRole('button', { name: 'Enregistrer' }).click()
-  await expect(page).toHaveURL(/\/admin$/)
-  await expect(adminItem(page, NAME)).toContainText('Photo')
+  await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
+  await expect(adminItem(page, NAME).locator('img.admin-row-thumb')).toHaveAttribute('src', /^\/media\/menu\/[a-f0-9]{32}-160\.webp$/)
 
   const { id, image_key: key } = await itemRow(NAME)
   expect(key).toMatch(/^[a-f0-9]{32}$/)
@@ -183,7 +187,7 @@ test('creates an item with a JPEG photo, served as metadata-free WebP with long 
 test('adds a PNG photo to an item that had none', async ({ page }) => {
   await login(page)
   await editPhoto(page, 'Pizza Test 3', files.png)
-  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
   const { id, image_key: key } = await itemRow('Pizza Test 3')
   expect(mediaFiles()).toEqual(expect.arrayContaining(variantsOf(key!)))
   expect(await auditActions(id)).toEqual(['menu_item.photo_add'])
@@ -193,7 +197,7 @@ test('replaces a photo with a WebP: new URL, old files deleted only after the sw
   await login(page)
   const before = await itemRow(NAME)
   await editPhoto(page, NAME, files.webp)
-  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
   const after = await itemRow(NAME)
   expect(after.image_key).toMatch(/^[a-f0-9]{32}$/)
   expect(after.image_key).not.toBe(before.image_key)
@@ -210,7 +214,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     const nextUpload = await captureUploads(page)
     await editPhoto(page, NAME, files.iphone)
     const sent = await nextUpload()
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     expect([sent.name, sent.type]).toEqual(['photo.jpg', 'image/jpeg'])
     const meta = await sharp(sent.data).metadata()
     // Portrait once the EXIF orientation is applied, longest side 2048.
@@ -226,7 +230,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     const nextUpload = await captureUploads(page)
     await editPhoto(page, NAME, files.huge)
     const sent = await nextUpload()
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     const meta = await sharp(sent.data).metadata()
     expect([meta.format, meta.width, meta.height]).toEqual(['jpeg', 2048, 1536])
     expect(sent.data.length).toBeLessThan(3 * 1024 * 1024)
@@ -237,7 +241,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     const nextUpload = await captureUploads(page)
     await editPhoto(page, NAME, files.sideways)
     const sent = await nextUpload()
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     const meta = await sharp(sent.data).metadata()
     expect([meta.width, meta.height, meta.orientation]).toEqual([400, 800, undefined])
     expect(near(await pixel(sent.data, 200, 50), [255, 0, 0])).toBe(true)
@@ -254,7 +258,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     const nextUpload = await captureUploads(page)
     await editPhoto(page, NAME, files.transparent)
     const sent = await nextUpload()
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     expect(near(await pixel(sent.data, 10, 10), [255, 255, 255])).toBe(true)
   })
 
@@ -266,7 +270,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     page.on('response', async (r) => {
       if (r.url().startsWith('http') && r.request().resourceType() === 'script' && (await r.body()).length > 1024 * 1024) bigScripts.push(r.url())
     })
-    await page.goto('/admin')
+    await page.goto('/admin?categorie=pizzas')
     await adminItem(page, NAME).getByRole('link', { name: 'Modifier' }).click()
     await choose(page, files.webp)
     expect(bigScripts).toEqual([])
@@ -276,7 +280,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     await expect.poll(() => bigScripts.length).toBe(1)
     await page.getByRole('button', { name: 'Enregistrer' }).click()
     const sent = await nextUpload()
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     const meta = await sharp(sent.data).metadata()
     expect([meta.format, meta.width, meta.height]).toEqual(['jpeg', 1600, 1200])
     const { id, image_key: key } = await itemRow(NAME)
@@ -290,7 +294,7 @@ test.describe('the browser prepares the photo before sending it', () => {
     await login(page)
     const before = await itemRow(NAME)
     await editPhoto(page, NAME, files.justBigEnough)
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     expect((await itemRow(NAME)).image_key).not.toBe(before.image_key)
   })
 })
@@ -322,10 +326,10 @@ test.describe('a photo the browser cannot use is explained and never sent', () =
       expect(mediaFiles()).toEqual(filesBefore)
 
       // Clearing the field lets the rest of the form be saved.
-      await page.getByLabel(/photo/i).setInputFiles([])
+      await photoField(page).setInputFiles([])
       await expect(page.locator('#item-photo-error')).toHaveCount(0)
       await page.getByRole('button', { name: 'Enregistrer' }).click()
-      await expect(page).toHaveURL(/\/admin$/)
+      await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
       expect(await itemRow(NAME)).toEqual(before)
     })
   }
@@ -498,7 +502,7 @@ test('removes the photo: files deleted, URL gone, audited, nothing on /carte', a
   await page.goto(`/admin/menu/${before.id}`)
   await expect(page.getByRole('img', { name: `Photo actuelle de ${NAME}` })).toBeVisible()
   await page.getByRole('button', { name: 'Supprimer la photo' }).click()
-  await expect(page.getByRole('heading', { name: 'Photo actuelle' })).toHaveCount(0)
+  await expect(page.getByRole('img', { name: `Photo actuelle de ${NAME}` })).toHaveCount(0)
   await expect(page.getByLabel('Photo (facultatif)')).toBeVisible()
   expect((await itemRow(NAME)).image_key).toBeNull()
   expect(mediaFiles()).not.toContain(variantsOf(before.image_key!)[0])
@@ -514,7 +518,7 @@ test('deleting an item deletes its photo files', async ({ page }) => {
   await page.goto(`/admin/menu/${id}`)
   await page.getByLabel('Je confirme la suppression').check()
   await page.getByRole('button', { name: 'Supprimer définitivement' }).click()
-  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
   expect(mediaFiles()).not.toContain(variantsOf(key!)[0])
   expect(mediaFiles()).not.toContain(variantsOf(key!)[1])
 })
@@ -529,7 +533,7 @@ test('orphan files left by an interrupted upload are cleaned after the next uplo
   }
   await login(page)
   await editPhoto(page, NAME, files.png)
-  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
   const { image_key: key } = await itemRow(NAME)
   // Only the current photo of this item remains (Pizza Test 3 was deleted above).
   expect(mediaFiles()).toEqual(variantsOf(key!))
@@ -546,7 +550,7 @@ test.describe('on a phone', () => {
     await choose(page, files.iphone)
     await expect(page.getByText('Photo prête')).toBeVisible()
     await page.getByRole('button', { name: 'Enregistrer' }).tap()
-    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page).toHaveURL(/\/admin\?categorie=pizzas$/)
     expect((await itemRow(NAME)).image_key).not.toBe(before.image_key)
     await page.goto('/carte#pizzas')
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)

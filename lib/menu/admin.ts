@@ -14,6 +14,7 @@ export type AdminMenuCategory = { key: StoredCategoryKey; label: string; legacy:
 export type MutationResult = 'ok' | 'not_found'
 // removedImageKey: photo no longer referenced once the transaction has committed (its files can go).
 export type PhotoMutationResult = { status: 'not_found' } | { status: 'ok'; removedImageKey: string | null }
+export type DeleteResult = { status: 'not_found' } | { status: 'ok'; removedImageKey: string | null; categoryKey: StoredCategoryKey }
 export type AuditAction =
   | 'menu_item.create'
   | 'menu_item.update'
@@ -53,7 +54,11 @@ async function withTransaction<T>(pool: mysql.Pool, work: (conn: mysql.PoolConne
       return result
     } catch (error) {
       await conn.rollback().catch(() => {})
-      if (attempt < 3 && LOCK_ERRORS.has((error as { code?: string }).code ?? '')) continue
+      if (attempt < 5 && LOCK_ERRORS.has((error as { code?: string }).code ?? '')) {
+        // A short random wait, so that the transactions that collided do not collide again at once.
+        await new Promise((resolve) => setTimeout(resolve, attempt * (10 + Math.random() * 40)))
+        continue
+      }
       throw error
     } finally {
       conn.release()
@@ -170,7 +175,7 @@ export function removeMenuItemPhoto(pool: mysql.Pool, adminUserId: number, id: n
   })
 }
 
-export function deleteMenuItem(pool: mysql.Pool, adminUserId: number, id: number): Promise<PhotoMutationResult> {
+export function deleteMenuItem(pool: mysql.Pool, adminUserId: number, id: number): Promise<DeleteResult> {
   return withTransaction(pool, async (conn) => {
     const item = await lockItem(conn, id)
     if (!item) return { status: 'not_found' }
@@ -178,7 +183,7 @@ export function deleteMenuItem(pool: mysql.Pool, adminUserId: number, id: number
     await conn.query('DELETE FROM menu_items WHERE id = ?', [id])
     await writePositions(conn, rows, rows.map((r) => r.id).filter((rowId) => rowId !== id))
     await writeAudit(conn, { adminUserId, action: 'menu_item.delete', menuItemId: id, menuItemName: item.name })
-    return { status: 'ok', removedImageKey: item.imageKey }
+    return { status: 'ok', removedImageKey: item.imageKey, categoryKey: item.categoryKey }
   })
 }
 
@@ -215,6 +220,23 @@ export function moveMenuItem(pool: mysql.Pool, adminUserId: number, id: number, 
     const to = direction === 'up' ? from - 1 : from + 1
     if (to >= 0 && to < ids.length) {
       ;[ids[from], ids[to]] = [ids[to], ids[from]]
+      await writeAudit(conn, { adminUserId, action: 'menu_item.move', menuItemId: id, menuItemName: item.name })
+    }
+    await writePositions(conn, rows, ids)
+    return 'ok'
+  })
+}
+
+// Drag and drop: puts the item at `position` (0-based, clamped) within its own category.
+export function moveMenuItemTo(pool: mysql.Pool, adminUserId: number, id: number, position: number): Promise<MutationResult> {
+  return withTransaction(pool, async (conn) => {
+    const item = await lockItem(conn, id)
+    if (!item) return 'not_found'
+    const rows = await lockCategory(conn, item.categoryKey)
+    const others = rows.map((r) => r.id).filter((rowId) => rowId !== id)
+    const target = Math.min(Math.max(position, 0), others.length)
+    const ids = [...others.slice(0, target), id, ...others.slice(target)]
+    if (ids.indexOf(id) !== rows.findIndex((r) => r.id === id)) {
       await writeAudit(conn, { adminUserId, action: 'menu_item.move', menuItemId: id, menuItemName: item.name })
     }
     await writePositions(conn, rows, ids)

@@ -15,6 +15,10 @@ import { centsToInput } from '@/lib/menu/price'
 type Props = {
   action: (state: ItemFormState, formData: FormData) => Promise<ItemFormState>
   item?: AdminMenuItem
+  // New item: category of the list it is added from.
+  defaultCategory?: string
+  // List the form goes back to when cancelled.
+  cancelHref: string
 }
 
 function FieldError({ field, errors }: { field: FieldName; errors?: ItemFormState['fieldErrors'] }) {
@@ -39,7 +43,7 @@ async function uploadPhoto(id: number, photo: Blob) {
   }
 }
 
-export function ItemForm({ action, item }: Props) {
+export function ItemForm({ action, item, defaultCategory, cancelHref }: Props) {
   const router = useRouter()
   // The photo actually sent: the chosen file once oriented, resized and re-encoded by the browser.
   const preparedPhoto = useRef<Blob | null>(null)
@@ -80,7 +84,8 @@ export function ItemForm({ action, item }: Props) {
     }
     if (!prepared || result.error || !result.savedId) return result
     const error = await uploadPhoto(result.savedId, prepared)
-    router.push(error ? `/admin/menu/${result.savedId}?photo=${encodeURIComponent(error)}` : '/admin')
+    const category = encodeURIComponent(String(formData.get('category') ?? ''))
+    router.push(error ? `/admin/menu/${result.savedId}?photo=${encodeURIComponent(error)}` : `/admin?categorie=${category}`)
     router.refresh()
     return result
   }, { error: null })
@@ -90,11 +95,11 @@ export function ItemForm({ action, item }: Props) {
     errors?.[field] ? { 'aria-invalid': true, 'aria-describedby': `item-${field}-error` } : {}
   // An item still in a retired category has to be given a current one when it is saved.
   const legacyCategory = LEGACY_MENU_CATEGORIES.find((c) => c.key === item?.categoryKey)
-  const currentCategory = item && isMenuCategoryKey(item.categoryKey) ? item.categoryKey : ''
+  const currentCategory = item ? (isMenuCategoryKey(item.categoryKey) ? item.categoryKey : '') : (defaultCategory ?? '')
 
   return (
     // Remounted after a failed submission so that the typed values are shown again.
-    <form key={JSON.stringify(sent ?? {})} action={formAction} className="admin-form admin-card">
+    <form key={JSON.stringify(sent ?? {})} action={formAction} className="admin-form">
       {state.error && <p role="alert" className="admin-alert">{state.error}</p>}
       {item && <input type="hidden" name="id" value={item.id} />}
 
@@ -164,7 +169,7 @@ export function ItemForm({ action, item }: Props) {
 
       <div className="admin-form-actions">
         <button type="submit" className="admin-button admin-button-primary" disabled={pending || photo.status === 'preparing'}>Enregistrer</button>
-        <Link href="/admin" className="admin-button admin-button-ghost">Annuler</Link>
+        <Link href={cancelHref} className="admin-button admin-button-ghost">Annuler</Link>
       </div>
     </form>
   )

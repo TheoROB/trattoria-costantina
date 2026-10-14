@@ -126,7 +126,8 @@ describe('admin menu', () => {
     await menu.createMenuItem(pool, julien, input({ name: 'A' }))
     const b = await menu.createMenuItem(pool, julien, input({ name: 'B' }))
     await menu.createMenuItem(pool, julien, input({ name: 'C' }))
-    expect(await menu.deleteMenuItem(pool, theo, b.id)).toMatchObject({ status: 'ok' })
+    // The category is returned so the admin goes back to its list.
+    expect(await menu.deleteMenuItem(pool, theo, b.id)).toEqual({ status: 'ok', removedImageKey: null, categoryKey: 'pizzas' })
     expect(await names('pizzas')).toEqual(['0:A', '1:C'])
     expect((await audit()).at(-1)).toEqual({ admin_user_id: theo, action: 'menu_item.delete', menu_item_id: b.id, menu_item_name: 'B' })
   })
@@ -139,6 +140,7 @@ describe('admin menu', () => {
     expect(await menu.deleteMenuItem(pool, theo, a.id)).toEqual({ status: 'not_found' })
     expect(await menu.setMenuItemFlag(pool, theo, a.id, 'visible', false)).toBe('not_found')
     expect(await menu.moveMenuItem(pool, theo, a.id, 'up')).toBe('not_found')
+    expect(await menu.moveMenuItemTo(pool, theo, a.id, 0)).toBe('not_found')
     expect(await menu.getAdminMenuItem(pool, 999999)).toBeNull()
     expect((await audit()).length).toBe(before)
   })
@@ -168,6 +170,40 @@ describe('admin menu', () => {
     expect(await names('pizzas')).toEqual(['0:C', '1:A', '2:B'])
     expect(await names('desserts')).toEqual(['0:D'])
     expect((await audit()).map((r) => r.action)).toEqual(['menu_item.move', 'menu_item.move'])
+  })
+
+  it('moves an item to a given position within its category (drag and drop), in one audited move', async () => {
+    await pool.query(`INSERT INTO menu_items (category_key, name, price_cents, position) VALUES
+      ('pizzas', 'A', 100, 0), ('pizzas', 'B', 100, 1), ('pizzas', 'C', 100, 2), ('pizzas', 'D', 100, 3),
+      ('desserts', 'X', 100, 0)`)
+    const [rows] = await pool.query<mysql.RowDataPacket[]>('SELECT id, name FROM menu_items')
+    const id = Object.fromEntries(rows.map((r) => [r.name, r.id]))
+    expect(await menu.moveMenuItemTo(pool, julien, id.D, 0)).toBe('ok')
+    expect(await names('pizzas')).toEqual(['0:D', '1:A', '2:B', '3:C'])
+    expect(await menu.moveMenuItemTo(pool, theo, id.D, 2)).toBe('ok')
+    expect(await names('pizzas')).toEqual(['0:A', '1:B', '2:D', '3:C'])
+    // Out of range: clamped to the end; never into another category.
+    expect(await menu.moveMenuItemTo(pool, julien, id.A, 99)).toBe('ok')
+    expect(await names('pizzas')).toEqual(['0:B', '1:D', '2:C', '3:A'])
+    expect(await names('desserts')).toEqual(['0:X'])
+    // Same place: no write, no audit entry.
+    expect(await menu.moveMenuItemTo(pool, julien, id.A, 3)).toBe('ok')
+    expect((await audit()).map((r) => [r.action, r.admin_user_id, r.menu_item_name])).toEqual([
+      ['menu_item.move', julien, 'D'], ['menu_item.move', theo, 'D'], ['menu_item.move', julien, 'A'],
+    ])
+  })
+
+  it('concurrent drag and drop moves in the same category never produce duplicate positions', async () => {
+    const ids = []
+    for (const name of ['A', 'B', 'C', 'D', 'E']) ids.push((await menu.createMenuItem(pool, julien, input({ name }))).id)
+    await Promise.all([
+      menu.moveMenuItemTo(pool, julien, ids[4], 0),
+      menu.moveMenuItemTo(pool, theo, ids[0], 4),
+      menu.moveMenuItem(pool, julien, ids[2], 'up'),
+      menu.moveMenuItemTo(pool, theo, ids[3], 1),
+    ])
+    const positions = (await names('pizzas')).map((n) => n.split(':')[0])
+    expect(positions).toEqual(['0', '1', '2', '3', '4'])
   })
 
   it('concurrent moves in the same category never produce duplicate positions', async () => {

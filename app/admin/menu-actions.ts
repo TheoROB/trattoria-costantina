@@ -9,12 +9,14 @@ import {
   createMenuItem,
   deleteMenuItem,
   moveMenuItem,
+  moveMenuItemTo,
   removeMenuItemPhoto,
   setMenuItemFlag,
   updateMenuItem,
   type MutationResult,
 } from '@/lib/menu/admin'
 import { formDataToObject, parseItemId, parseMenuItemForm, type FieldName } from '@/lib/menu/admin-input'
+import type { StoredCategoryKey } from '@/lib/menu/categories'
 import { discardMenuPhoto } from '@/lib/media/menu-photos'
 
 export type ItemFormState = {
@@ -25,6 +27,10 @@ export type ItemFormState = {
   // Set instead of redirecting when the form still has a photo to send (POST /api/admin/menu/<id>/photo).
   savedId?: number
 }
+
+// Quick actions of the list (availability, visibility, order): the list updates at once and rolls back
+// when the result is not 'ok'.
+export type ListActionResult = 'ok' | 'not_found' | 'failed' | 'invalid'
 
 const MESSAGES = {
   invalid: 'Certains champs sont invalides : corrigez-les puis enregistrez.',
@@ -63,13 +69,14 @@ function takePhotoPending(formData: FormData) {
   return pending.length === 1 && pending[0] === '1'
 }
 
-function done() {
+// Back to the list, on the category of the item.
+function done(categoryKey: StoredCategoryKey) {
   revalidatePath('/admin')
-  redirect('/admin')
+  redirect(`/admin?categorie=${categoryKey}`)
 }
 
-function saved(id: number, photoPending: boolean): ItemFormState {
-  if (!photoPending) done()
+function saved(id: number, categoryKey: StoredCategoryKey, photoPending: boolean): ItemFormState {
+  if (!photoPending) done(categoryKey)
   revalidatePath('/admin')
   return { error: null, savedId: id }
 }
@@ -84,7 +91,7 @@ export async function createItem(_previous: ItemFormState, formData: FormData): 
   if (!parsed.ok) return { error: MESSAGES.invalid, fieldErrors: parsed.fieldErrors, values: echo(formData) }
   const result = await attempt('create', () => createMenuItem(getPool(), admin.adminUserId, parsed.data))
   if (result === 'failed') return { error: MESSAGES.failed, values: echo(formData) }
-  return saved(result.id, photoPending)
+  return saved(result.id, parsed.data.categoryKey, photoPending)
 }
 
 export async function updateItem(_previous: ItemFormState, formData: FormData): Promise<ItemFormState> {
@@ -99,7 +106,7 @@ export async function updateItem(_previous: ItemFormState, formData: FormData): 
   const result = await mutate('update', () => updateMenuItem(getPool(), admin.adminUserId, id, parsed.data))
   if (result === 'not_found') return { error: MESSAGES.notFound, values: echo(formData) }
   if (result === 'failed') return { error: MESSAGES.failed, values: echo(formData) }
-  return saved(id, photoPending)
+  return saved(id, parsed.data.categoryKey, photoPending)
 }
 
 const deleteSchema = z.strictObject({ id: z.string(), confirm: z.literal('on') })
@@ -114,7 +121,7 @@ export async function deleteItem(_previous: ItemFormState, formData: FormData): 
   if (result === 'failed') return { error: MESSAGES.failed }
   if (result.status === 'not_found') return { error: MESSAGES.notFound }
   await discardMenuPhoto(result.removedImageKey)
-  done()
+  done(result.categoryKey)
   return { error: null }
 }
 
@@ -136,30 +143,42 @@ export async function removePhoto(formData: FormData) {
 
 const flagSchema = z.strictObject({ id: z.string(), flag: z.enum(['available', 'visible']), value: z.enum(['0', '1']) })
 
-export async function setFlag(formData: FormData) {
+export async function setFlag(formData: FormData): Promise<ListActionResult> {
   const admin = await requireAdmin()
   const object = formDataToObject(formData)
   const parsed = object ? flagSchema.safeParse(object) : null
   const id = parsed?.success ? parseItemId(parsed.data.id) : null
-  if (!parsed?.success || !id) return fail('invalide')
+  if (!parsed?.success || !id) return 'invalid'
   const { flag, value } = parsed.data
-  const result = await mutate('set flag', () => setMenuItemFlag(getPool(), admin.adminUserId, id, flag, value === '1'))
-  if (result === 'not_found') return fail('introuvable')
-  if (result === 'failed') return fail('echec')
-  done()
+  return listResult(await mutate('set flag', () => setMenuItemFlag(getPool(), admin.adminUserId, id, flag, value === '1')))
 }
 
 const moveSchema = z.strictObject({ id: z.string(), direction: z.enum(['up', 'down']) })
 
-export async function moveItem(formData: FormData) {
+export async function moveItem(formData: FormData): Promise<ListActionResult> {
   const admin = await requireAdmin()
   const object = formDataToObject(formData)
   const parsed = object ? moveSchema.safeParse(object) : null
   const id = parsed?.success ? parseItemId(parsed.data.id) : null
-  if (!parsed?.success || !id) return fail('invalide')
+  if (!parsed?.success || !id) return 'invalid'
   const { direction } = parsed.data
-  const result = await mutate('move', () => moveMenuItem(getPool(), admin.adminUserId, id, direction))
-  if (result === 'not_found') return fail('introuvable')
-  if (result === 'failed') return fail('echec')
-  done()
+  return listResult(await mutate('move', () => moveMenuItem(getPool(), admin.adminUserId, id, direction)))
+}
+
+const reorderSchema = z.strictObject({ id: z.string(), position: z.string().regex(/^\d{1,4}$/) })
+
+// Drag and drop within a category.
+export async function reorderItem(formData: FormData): Promise<ListActionResult> {
+  const admin = await requireAdmin()
+  const object = formDataToObject(formData)
+  const parsed = object ? reorderSchema.safeParse(object) : null
+  const id = parsed?.success ? parseItemId(parsed.data.id) : null
+  if (!parsed?.success || !id) return 'invalid'
+  const position = Number(parsed.data.position)
+  return listResult(await mutate('reorder', () => moveMenuItemTo(getPool(), admin.adminUserId, id, position)))
+}
+
+function listResult(result: 'ok' | 'not_found' | 'failed'): ListActionResult {
+  if (result === 'ok') revalidatePath('/admin')
+  return result
 }

@@ -27,7 +27,8 @@ async function captureEdit(page: Page, id: number, buttonName: string) {
 }
 
 async function captureListAction(page: Page, id: number, buttonName: RegExp) {
-  await page.goto('/admin')
+  // insertMenuItem() puts the item in the pizzas category.
+  await page.goto('/admin?categorie=pizzas')
   const item = page.locator(`li[data-item-id="${id}"]`)
   return captureAction(page, () => item.getByRole('button', { name: buttonName }).click())
 }
@@ -35,7 +36,8 @@ async function captureListAction(page: Page, id: number, buttonName: RegExp) {
 async function expectReplayLeavesMenuUntouched(
   action: CapturedAction,
   baseURL: string,
-  options: { token?: string; origin?: string; method?: 'GET' | 'POST' } = {},
+  // authenticatedPage: the response is an ordinary admin page (GET with a valid cookie), which shows the menu.
+  options: { token?: string; origin?: string; method?: 'GET' | 'POST'; authenticatedPage?: boolean } = {},
 ) {
   const before = await menuItemsFingerprint()
   const response = await replayAction(action, { baseURL, ...options })
@@ -43,8 +45,10 @@ async function expectReplayLeavesMenuUntouched(
     const body = await response.text()
     expect(await menuItemsFingerprint()).toBe(before)
     expect(response.status()).not.toBe(404)
-    for (const marker of ['Antipasto Test 1', 'Pizza Test 1', 'Dessert Test 1']) {
-      expect(body).not.toContain(marker)
+    if (!options.authenticatedPage) {
+      for (const marker of ['Antipasto Test 1', 'Pizza Test 1', 'Dessert Test 1']) {
+        expect(body).not.toContain(marker)
+      }
     }
     expect(body).not.toContain('password_hash')
     expect(body).not.toContain('token_hash')
@@ -132,5 +136,5 @@ test('GET with a Server Action header is never a mutation', async ({ page, conte
   if (!baseURL) throw new Error('Playwright baseURL is required')
   const action = await captureCreate(page)
   const token = await sessionToken(context)
-  await expectReplayLeavesMenuUntouched(action, baseURL, { token, method: 'GET' })
+  await expectReplayLeavesMenuUntouched(action, baseURL, { token, method: 'GET', authenticatedPage: true })
 })
