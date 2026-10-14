@@ -12,7 +12,7 @@ export async function Carte() {
         <div className="section-header">
           <p className="supertitle"><span className="line"></span>La Carte<span className="line"></span></p>
           <h2>Nos Spécialités</h2>
-          <p className="section-subtitle">Des recettes authentiques des Pouilles, préparées avec des ingrédients frais et de saison</p>
+          <p className="section-subtitle">Un aperçu de notre cuisine italienne faite maison</p>
         </div>
 
         {preview.length > 0 ? (

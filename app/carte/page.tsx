@@ -4,10 +4,17 @@ import { MenuStatus } from '@/components/menu/MenuCategories'
 import { Footer } from '@/components/sections/Footer'
 import { Navbar } from '@/components/sections/Navbar'
 import { getPublicMenu } from '@/lib/menu/queries'
+import { socialMetadata } from '@/lib/seo/metadata'
+
+const title = 'La carte — Trattoria Costantina, Hénin-Beaumont'
+const description =
+  'La carte de la Trattoria Costantina à Hénin-Beaumont : antipasti, pasta, pizza napoletana, desserts, spritz, apéritifs, bières, vins, digestifs et boissons sans alcool.'
 
 export const metadata: Metadata = {
-  title: 'La carte — Trattoria Costantina, Hénin-Beaumont',
-  description: 'La carte de la Trattoria Costantina à Hénin-Beaumont : antipasti, pasta, pizza napoletana, desserts, spritz, apéritifs, bières, vins, digestifs et boissons sans alcool.',
+  title,
+  description,
+  alternates: { canonical: '/carte' },
+  ...socialMetadata({ title, description, path: '/carte' }),
 }
 
 export default async function CartePage() {
