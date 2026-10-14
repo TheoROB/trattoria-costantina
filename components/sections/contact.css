@@ -1,0 +1,118 @@
+/* Contact section (home page, between "Nous trouver" and the footer). Uses the tokens of app/globals.css. */
+.section-contact {
+  padding: 6rem 0;
+  background: var(--cream-dark);
+}
+
+.section-contact .section-subtitle a,
+.contact-privacy a {
+  color: var(--terracotta-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.contact-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--white);
+  border-radius: 6px;
+  padding: 2.25rem;
+  box-shadow: 0 2px 24px rgba(44, 26, 14, 0.07);
+}
+
+.contact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  min-width: 0;
+}
+
+.contact-field label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--brown);
+  letter-spacing: 0.03em;
+}
+
+.contact-optional { font-weight: 300; color: var(--brown-light); }
+
+.contact-field input,
+.contact-field textarea {
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--cream-border);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  /* 16px avoids the iOS zoom on focus. */
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--brown);
+  background: var(--cream);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.contact-field textarea { resize: vertical; min-height: 9rem; line-height: 1.6; }
+
+.contact-field input:focus,
+.contact-field textarea:focus { border-color: var(--terracotta); }
+.contact-field input:focus-visible,
+.contact-field textarea:focus-visible { outline: 2px solid var(--terracotta); outline-offset: 1px; }
+
+.contact-field [aria-invalid='true'] { border-color: #A3361F; }
+
+.contact-field-error {
+  font-size: 0.8rem;
+  color: #A3361F;
+  line-height: 1.4;
+}
+
+/* Off-screen rather than display:none, which some bots detect. */
+.contact-hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-form { position: relative; }
+
+.contact-privacy {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--brown-light);
+  margin: 0.25rem 0 1rem;
+}
+
+.contact-status {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-left: 3px solid currentColor;
+}
+
+/* Kept in the accessibility tree when empty, so that screen readers announce the next message. */
+.contact-status:empty { padding: 0; margin: 0; border: 0; }
+
+.contact-status-success { color: #3F5A2A; background: #EEF3E6; }
+.contact-status-error { color: #A3361F; background: #FBECE7; }
+
+.contact-submit { width: 100%; justify-content: center; }
+.contact-submit:disabled { opacity: 0.65; cursor: progress; }
+.contact-submit:focus-visible { outline: 2px solid var(--terracotta); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .section-contact { padding: 4rem 0; }
+  .contact-card { padding: 1.5rem 1.25rem; }
+  .contact-row { grid-template-columns: 1fr; gap: 0; }
+}
