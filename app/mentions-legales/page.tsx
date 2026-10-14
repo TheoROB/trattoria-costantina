@@ -1,12 +1,18 @@
 import type { Metadata } from 'next'
 import { Footer } from '@/components/sections/Footer'
 import { Navbar } from '@/components/sections/Navbar'
+import { socialMetadata } from '@/lib/seo/metadata'
 import { site } from '@/lib/site'
 
+const title = 'Mentions légales — Trattoria Costantina'
+
 export const metadata: Metadata = {
-  title: 'Mentions légales — Trattoria Costantina',
+  title,
   // Kept out of search results until the missing legal details (lib/site.ts) are provided.
   robots: { index: false },
+  // Overrides the home page canonical and social card inherited from the root layout.
+  alternates: { canonical: '/mentions-legales' },
+  ...socialMetadata({ title, description: `Mentions légales du site ${site.name}.`, path: '/mentions-legales' }),
 }
 
 export default function MentionsLegalesPage() {
@@ -36,6 +42,18 @@ export default function MentionsLegalesPage() {
           <li>{site.host.name} — {site.host.company}</li>
           <li>{site.host.address}</li>
         </ul>
+
+        <h2>Cookies</h2>
+        {/* Matches the code: no analytics or ads; the only first-party cookie is the admin session (lib/auth/dal.ts). */}
+        <p>
+          Ce site ne dépose aucun cookie de mesure d&apos;audience ni de publicité. Seul l&apos;espace
+          d&apos;administration, réservé à l&apos;équipe du restaurant, utilise un cookie de session strictement
+          nécessaire à la connexion.
+        </p>
+        <p>
+          Le module de réservation en ligne est fourni par DISH (reservation.dish.co) et intégré à la page
+          d&apos;accueil : son utilisation relève de la politique de confidentialité et de cookies de ce prestataire.
+        </p>
       </main>
       <Footer />
     </>
