@@ -18,11 +18,18 @@
 .carte-nav-list {
   position: relative;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
   gap: 0.35rem;
-  padding: 0.85rem 0;
+  /* Always one row: scrolls sideways (edge to edge of the screen) when the chips do not fit. */
+  overflow-x: auto;
+  scrollbar-width: thin;
+  margin: 0 -2rem;
+  padding: 0.85rem 2rem;
+  scroll-padding-inline: 2rem;
 }
+/* Centred when everything fits, without cutting off the first chips when it scrolls. */
+.carte-nav-list > li:first-child { margin-left: auto; }
+.carte-nav-list > li:last-child { margin-right: auto; }
 
 .carte-chip {
   display: inline-flex;
@@ -230,17 +237,9 @@
   .carte .carte-dishes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* Phones: the bar scrolls sideways; dishes become a single list with small thumbnails. */
+/* Phones: touch scrolling without a scrollbar; dishes become a single list with small thumbnails. */
 @media (max-width: 699px) {
-  .carte-nav-list {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    overflow-x: auto;
-    scrollbar-width: none;
-    margin: 0 -2rem;
-    padding: 0.75rem 2rem;
-    scroll-padding-inline: 2rem;
-  }
+  .carte-nav-list { scrollbar-width: none; padding: 0.75rem 2rem; }
   .carte-nav-list::-webkit-scrollbar { display: none; }
   .carte-section { padding-top: 1.4rem; }
   .section-carte-full .carte-section-title { margin-bottom: 0.75rem; }

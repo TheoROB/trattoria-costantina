@@ -174,17 +174,50 @@ test.describe('/carte', () => {
     })
   }
 
-  test('on a phone the category bar scrolls sideways and brings the current chip into view', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto('/carte#boissons')
-    const list = bar(page).getByRole('list')
-    expect(await list.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true)
-    await expectShown(page, 'boissons', 'Boissons')
-    await expect.poll(async () => {
-      const box = await bar(page).getByRole('link', { name: 'Boissons' }).boundingBox()
-      return box!.x >= 0 && box!.x + box!.width <= 375
-    }).toBe(true)
-  })
+  for (const width of [375, 768, 1024, 1280]) {
+    test(`${width} px: the category bar stays on one row, scrolls on its own and keeps the current chip in view`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 })
+      await page.goto('/carte#boissons')
+      await expectShown(page, 'boissons', 'Boissons')
+      const list = bar(page).getByRole('list')
+      const rows = () => bar(page).getByRole('link').evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().top))).size)
+      expect(await rows()).toBe(1)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
+      // Only the bar scrolls sideways, and only when the chips do not fit.
+      const overflows = await list.evaluate((el) => el.scrollWidth > el.clientWidth)
+      expect(await list.evaluate((el) => getComputedStyle(el).overflowX)).toBe('auto')
+      if (width === 375) expect(overflows).toBe(true)
+      if (!overflows) {
+        // Centred when everything fits.
+        const [first, last] = [await bar(page).getByRole('link').first().boundingBox(), await bar(page).getByRole('link').last().boundingBox()]
+        expect(Math.abs(first!.x - (width - (last!.x + last!.width)))).toBeLessThan(4)
+      }
+      await expect.poll(async () => {
+        const box = await bar(page).getByRole('link', { name: 'Boissons' }).boundingBox()
+        return box!.x >= 0 && box!.x + box!.width <= width
+      }).toBe(true)
+
+      // Keyboard: Shift+Tab walks back along the chips to the first one, which Enter opens.
+      await bar(page).getByRole('link', { name: 'Boissons' }).focus()
+      for (let i = 1; i < CATEGORIES.length; i++) await page.keyboard.press('Shift+Tab')
+      await expect(bar(page).getByRole('link', { name: 'Antipasti' })).toBeFocused()
+      await page.keyboard.press('Enter')
+      await expectShown(page, 'antipasti', 'Antipasti')
+      await expect.poll(async () => {
+        const box = await bar(page).getByRole('link', { name: 'Antipasti' }).boundingBox()
+        return box!.x >= 0 && box!.x + box!.width <= width
+      }).toBe(true)
+
+      // Sticky under the site bar down to the bottom of the category, with the same height.
+      const height = (await bar(page).boundingBox())!.height
+      await page.setViewportSize({ width, height: 480 })
+      await page.goto('/carte#pizzas')
+      await expectShown(page, 'pizzas', 'Pizza Napoletana')
+      await page.locator('.carte-footer').scrollIntoViewIfNeeded()
+      await expect.poll(async () => Math.round((await bar(page).boundingBox())!.y)).toBe(76)
+      expect((await bar(page).boundingBox())!.height).toBe(height)
+    })
+  }
 
   test('has its own title and keeps the site navigation', async ({ page }) => {
     await page.goto('/carte')
