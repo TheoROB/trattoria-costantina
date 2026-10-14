@@ -68,6 +68,7 @@ describe('staticSecurityHeaders', () => {
     expect(h['Strict-Transport-Security']).toBe('max-age=31536000; includeSubDomains')
     expect(h['Permissions-Policy']).toContain('camera=()')
     expect(h['Permissions-Policy']).toContain('geolocation=()')
+    expect(h['Permissions-Policy']).not.toContain('interest-cohort')
   })
 })
 
