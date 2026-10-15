@@ -32,8 +32,9 @@ unset DATABASE_URL
 
 ## Retired "boissons" category
 
-Migration 0004 still accepts `boissons` so that existing rows survive. Before writing the migration that drops
-it, check on production (read-only):
+Migration 0005 removes `boissons` from the allowed categories (production checked empty on 2026-10-15). It
+refuses to apply, without changing any row, while an item is still in that category. Before `npm run db:migrate`
+on a database still at 0004, check (read-only):
 
 ```sh
 npm run menu:recategorize -- list   # must print "No item left in a retired category"
@@ -45,9 +46,8 @@ or in phpMyAdmin:
 SELECT COUNT(*) AS boissons_items FROM menu_items WHERE category_key = 'boissons';  -- must be 0
 ```
 
-If items remain, move them first: from the admin (edit each item), or with
-`npm run menu:recategorize -- check mapping.json` then `-- apply mapping.json`. The local database is not a
-reference: only a zero count on production allows the next migration.
+If items remain (the admin no longer lists them), move them first with
+`npm run menu:recategorize -- check mapping.json` then `-- apply mapping.json`, then migrate again.
 
 ## Secret rotation
 

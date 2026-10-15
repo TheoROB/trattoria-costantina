@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import mysql from 'mysql2/promise'
 
 // The integration tests and the Playwright suite share this database and both reset it:
@@ -18,4 +21,13 @@ export async function resetDatabase(url = testDatabaseUrl()) {
   for (const { name } of rows) await conn.query(`DROP TABLE \`${name}\``)
   await conn.query('SET FOREIGN_KEY_CHECKS = 1')
   await conn.end()
+}
+
+// Copy of db/migrations holding only the migrations numbered below `version` (e.g. '0005'): the schema as deployed
+// before that migration.
+export function migrationsBefore(version: string) {
+  const source = path.resolve('db/migrations')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'migrations-'))
+  for (const file of fs.readdirSync(source).filter((f) => f < version)) fs.copyFileSync(path.join(source, file), path.join(dir, file))
+  return dir
 }

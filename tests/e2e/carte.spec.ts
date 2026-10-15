@@ -32,7 +32,7 @@ test.describe('home page menu preview', () => {
 })
 
 // Categories holding visible items in the test data, in menu order.
-const CATEGORIES = ['Antipasti', 'Pasta', 'Pizza Napoletana', 'Desserts', 'Spritz', 'Vins', 'Sans alcool', 'Boissons']
+const CATEGORIES = ['Antipasti', 'Pasta', 'Pizza Napoletana', 'Desserts', 'Spritz', 'Vins', 'Sans alcool']
 
 const bar = (page: Page) => page.getByRole('navigation', { name: 'Catégories de la carte' })
 
@@ -51,7 +51,7 @@ test.describe('/carte', () => {
 
     await page.goto('/carte')
     await expect(page.locator('h1')).toHaveText('La Carte')
-    // Empty categories are not shown; items still in the retired "Boissons" category come last.
+    // Empty categories are not shown.
     await expect(page.locator('.menu-category h2')).toHaveText(CATEGORIES)
     const pizzas = page.locator('.menu-category').filter({ hasText: 'Pizza Napoletana' }).locator('.menu-name')
     await expect(pizzas).toHaveText([
@@ -120,13 +120,13 @@ test.describe('/carte', () => {
   })
 
   test('"next category" leads through the menu; "see the whole menu" shows everything, a chip goes back to one', async ({ page }) => {
-    await page.goto('/carte#vins')
+    await page.goto('/carte#spritz')
+    await page.getByRole('link', { name: /Catégorie suivante : Vins/ }).click()
+    await expect(page).toHaveURL(/#vins$/)
+    await expectShown(page, 'vins', 'Vins')
     await page.getByRole('link', { name: /Catégorie suivante : Sans alcool/ }).click()
     await expect(page).toHaveURL(/#sans_alcool$/)
     await expectShown(page, 'sans_alcool', 'Sans alcool')
-    await page.getByRole('link', { name: /Catégorie suivante : Boissons/ }).click()
-    await expect(page).toHaveURL(/#boissons$/)
-    await expectShown(page, 'boissons', 'Boissons')
     // Last category: nothing next.
     await expect(page.getByRole('link', { name: /Catégorie suivante/ })).toHaveCount(0)
 
@@ -177,8 +177,8 @@ test.describe('/carte', () => {
   for (const width of [375, 768, 1024, 1280]) {
     test(`${width} px: the category bar stays on one row, scrolls on its own and keeps the current chip in view`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 })
-      await page.goto('/carte#boissons')
-      await expectShown(page, 'boissons', 'Boissons')
+      await page.goto('/carte#sans_alcool')
+      await expectShown(page, 'sans_alcool', 'Sans alcool')
       const list = bar(page).getByRole('list')
       const rows = () => bar(page).getByRole('link').evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().top))).size)
       expect(await rows()).toBe(1)
@@ -193,12 +193,12 @@ test.describe('/carte', () => {
         expect(Math.abs(first!.x - (width - (last!.x + last!.width)))).toBeLessThan(4)
       }
       await expect.poll(async () => {
-        const box = await bar(page).getByRole('link', { name: 'Boissons' }).boundingBox()
+        const box = await bar(page).getByRole('link', { name: 'Sans alcool' }).boundingBox()
         return box!.x >= 0 && box!.x + box!.width <= width
       }).toBe(true)
 
       // Keyboard: Shift+Tab walks back along the chips to the first one, which Enter opens.
-      await bar(page).getByRole('link', { name: 'Boissons' }).focus()
+      await bar(page).getByRole('link', { name: 'Sans alcool' }).focus()
       for (let i = 1; i < CATEGORIES.length; i++) await page.keyboard.press('Shift+Tab')
       await expect(bar(page).getByRole('link', { name: 'Antipasti' })).toBeFocused()
       await page.keyboard.press('Enter')

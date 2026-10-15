@@ -6,7 +6,7 @@ import mysql from 'mysql2/promise'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { runMigrations } from '../../lib/db-migrations.mts'
 import { applyRecategorization, listLegacyItems, parseRecategorization } from '../../lib/menu/recategorize.mts'
-import { resetDatabase, testDatabaseUrl } from './db-helpers'
+import { migrationsBefore, resetDatabase, testDatabaseUrl } from './db-helpers'
 
 const url = testDatabaseUrl()
 let conn: mysql.Connection
@@ -39,7 +39,8 @@ function mappingFile(mapping: unknown) {
 
 beforeAll(async () => {
   await resetDatabase()
-  await runMigrations(url, path.resolve('db/migrations'))
+  // Migration 0005 rejects 'boissons': the script is meant for a database not yet migrated to it.
+  await runMigrations(url, migrationsBefore('0005'))
   conn = await mysql.createConnection(url)
 })
 beforeEach(async () => {

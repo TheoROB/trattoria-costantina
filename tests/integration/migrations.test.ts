@@ -4,7 +4,7 @@ import path from 'node:path'
 import mysql from 'mysql2/promise'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { runMigrations } from '../../lib/db-migrations.mts'
-import { resetDatabase, testDatabaseUrl } from './db-helpers'
+import { migrationsBefore, resetDatabase, testDatabaseUrl } from './db-helpers'
 
 const MIGRATIONS_DIR = path.resolve('db/migrations')
 const url = testDatabaseUrl()
@@ -45,21 +45,65 @@ describe('runMigrations', () => {
 describe('0004_expand_menu_categories', () => {
   it('keeps the existing items, "boissons" included, and accepts the new categories', async () => {
     // Database as deployed before 0004, with items in every old category.
-    const before = fs.mkdtempSync(path.join(os.tmpdir(), 'migrations-'))
-    for (const file of fs.readdirSync(MIGRATIONS_DIR).filter((f) => f < '0004')) fs.copyFileSync(path.join(MIGRATIONS_DIR, file), path.join(before, file))
-    await runMigrations(url, before)
+    await runMigrations(url, migrationsBefore('0004'))
     for (const category_key of ['antipasti', 'pates_plats', 'pizzas', 'desserts', 'boissons']) {
       await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `Old ${category_key}`, price_cents: 500 }])
     }
     await expect(conn.query("INSERT INTO menu_items SET category_key = 'spritz', name = 'Too early', price_cents = 800")).rejects.toThrow()
 
-    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0004_expand_menu_categories.sql'])
+    expect((await runMigrations(url, migrationsBefore('0005'))).applied).toEqual(['0004_expand_menu_categories.sql'])
     const [rows] = await conn.query<mysql.RowDataPacket[]>('SELECT category_key FROM menu_items ORDER BY id')
     expect(rows.map((r) => r.category_key)).toEqual(['antipasti', 'pates_plats', 'pizzas', 'desserts', 'boissons'])
     for (const category_key of ['spritz', 'aperitifs', 'bieres_pression', 'bieres_bouteille', 'vins', 'digestifs', 'sans_alcool']) {
       await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `New ${category_key}`, price_cents: 500 }])
     }
     await expect(conn.query("INSERT INTO menu_items SET category_key = 'sushis', name = 'X', price_cents = 800")).rejects.toThrow()
+  })
+})
+
+const CATEGORIES = [
+  'antipasti', 'pates_plats', 'pizzas', 'desserts', 'spritz', 'aperitifs', 'bieres_pression', 'bieres_bouteille',
+  'vins', 'digestifs', 'sans_alcool',
+]
+
+describe('0005_remove_legacy_boissons_category', () => {
+  const menuRows = async () => (await conn.query<mysql.RowDataPacket[]>('SELECT * FROM menu_items ORDER BY id'))[0]
+  const appliedVersions = async () => (await conn.query<mysql.RowDataPacket[]>('SELECT version FROM schema_migrations'))[0].map((r) => r.version)
+
+  beforeEach(async () => {
+    // Database as deployed with 0001 to 0004.
+    await runMigrations(url, migrationsBefore('0005'))
+    for (const category_key of CATEGORIES) {
+      await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `Item ${category_key}`, price_cents: 500 }])
+    }
+  })
+
+  it('applies when no item is left in "boissons", without touching the items; then only the 11 categories are accepted', async () => {
+    const before = await menuRows()
+    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
+    expect(await menuRows()).toEqual(before)
+    for (const category_key of CATEGORIES) {
+      await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `New ${category_key}`, price_cents: 500 }])
+    }
+    for (const category_key of ['boissons', 'sushis', '']) {
+      await expect(conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: 'X', price_cents: 500 }])).rejects.toThrow(/chk_menu_items_category/)
+    }
+    await expect(conn.query("UPDATE menu_items SET category_key = 'boissons' WHERE category_key = 'vins'")).rejects.toThrow(/chk_menu_items_category/)
+  })
+
+  it('refuses to run while an item is still in "boissons", and changes nothing', async () => {
+    await conn.query("INSERT INTO menu_items SET category_key = 'boissons', name = 'Coca', price_cents = 300")
+    const before = await menuRows()
+
+    await expect(runMigrations(url, MIGRATIONS_DIR)).rejects.toThrow(/chk_menu_items_category/)
+    expect(await menuRows()).toEqual(before)
+    expect(await appliedVersions()).not.toContain('0005_remove_legacy_boissons_category.sql')
+    // The 0004 constraint is still in place.
+    await conn.query("INSERT INTO menu_items SET category_key = 'boissons', name = 'Fanta', price_cents = 300")
+
+    // Once the items are moved, the migration goes through.
+    await conn.query("UPDATE menu_items SET category_key = 'sans_alcool' WHERE category_key = 'boissons'")
+    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
   })
 })
 
@@ -79,6 +123,7 @@ describe('menu_items constraints', () => {
 
   it.each([
     ['unknown category', { category_key: 'sushis' }],
+    ['retired category', { category_key: 'boissons' }],
     ['zero price', { price_cents: 0 }],
     ['price above 1000€', { price_cents: 100001 }],
     ['empty name', { name: '' }],

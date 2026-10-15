@@ -29,7 +29,7 @@ test('Julien and Théo can both sign in, see the categories with their counts, o
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('La carte')
     await expect(tabs(page).getByRole('link')).toHaveText([
       'Antipasti · 2', 'Pasta · 1', 'Pizza Napoletana · 7', 'Desserts · 1', 'Spritz · 1', 'Apéritifs · 0',
-      'Bières pression · 0', 'Bières bouteille · 0', 'Vins · 1', 'Digestifs · 0', 'Sans alcool · 1', 'Boissons (à reclasser) · 1',
+      'Bières pression · 0', 'Bières bouteille · 0', 'Vins · 1', 'Digestifs · 0', 'Sans alcool · 1',
     ])
     // First category with items, alone.
     expect(await shownCategories(page)).toEqual(['Antipasti'])
@@ -247,18 +247,18 @@ test('a network failure during a quick change rolls it back and keeps the admin 
   const violations: string[] = []
   page.on('console', (m) => m.type() === 'error' && /Content Security Policy/.test(m.text()) && violations.push(m.text()))
   await login(page, 'julien')
-  await page.goto('/admin?categorie=boissons')
+  await page.goto('/admin?categorie=sans_alcool')
   const isAction = (url: URL) => url.pathname === '/admin'
   await page.route(isAction, (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()))
-  await adminItem(page, 'Boisson Test 1').getByRole('button', { name: 'Masquer' }).click()
+  await adminItem(page, 'Soda Test 1').getByRole('button', { name: 'Masquer' }).click()
   await expect(page.getByRole('alert').filter({ hasText: 'La modification n’a pas pu être enregistrée' })).toBeVisible()
   // Back to its real state.
-  await expect(adminItem(page, 'Boisson Test 1').getByRole('button', { name: 'Masquer' })).toHaveText('Visible')
+  await expect(adminItem(page, 'Soda Test 1').getByRole('button', { name: 'Masquer' })).toHaveText('Visible')
   await page.unroute(isAction)
-  await adminItem(page, 'Boisson Test 1').getByRole('button', { name: 'Masquer' }).click()
-  await expect(page.getByText('« Boisson Test 1 » : masqué.')).toBeVisible()
-  await adminItem(page, 'Boisson Test 1').getByRole('button', { name: 'Afficher' }).click()
-  await expect(page.getByText('« Boisson Test 1 » : visible.')).toBeVisible()
+  await adminItem(page, 'Soda Test 1').getByRole('button', { name: 'Masquer' }).click()
+  await expect(page.getByText('« Soda Test 1 » : masqué.')).toBeVisible()
+  await adminItem(page, 'Soda Test 1').getByRole('button', { name: 'Afficher' }).click()
+  await expect(page.getByText('« Soda Test 1 » : visible.')).toBeVisible()
   expect(violations).toEqual([])
 })
 
@@ -363,14 +363,14 @@ test.describe('on a phone', () => {
     await login(page, 'julien')
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
     // The category tabs scroll sideways; the current one is brought into view.
-    await page.goto('/admin?categorie=boissons')
-    const current = tabs(page).getByRole('link', { name: /^Boissons/ })
+    await page.goto('/admin?categorie=sans_alcool')
+    const current = tabs(page).getByRole('link', { name: /^Sans alcool/ })
     await expect.poll(async () => {
       const box = await current.boundingBox()
       return box!.x >= 0 && box!.x + box!.width <= 375
     }).toBe(true)
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
-    const item = adminItem(page, 'Boisson Test 1')
+    const item = adminItem(page, 'Soda Test 1')
     await item.getByRole('button', { name: 'Marquer indisponible' }).tap()
     await expect(item.getByRole('button', { name: 'Marquer disponible' })).toBeVisible()
     await item.getByRole('button', { name: 'Marquer disponible' }).tap()
@@ -422,41 +422,4 @@ test.describe('on a phone', () => {
     await expect(page).toHaveURL(/\/admin\?categorie=sans_alcool$/)
     await expect(adminItem(page, 'Limonata')).toHaveCount(0)
   })
-})
-
-test('an item left in the retired "Boissons" category is moved by giving it a new category', async ({ page }) => {
-  const legacy = await insertMenuItem({ category_key: 'boissons', name: 'Negroni', price_cents: 900, position: 1 })
-  await login(page, 'julien')
-  await expect(tabs(page).getByRole('link', { name: /^Boissons \(à reclasser\)/ })).toHaveText('Boissons (à reclasser) · 2')
-  await tabs(page).getByRole('link', { name: /^Boissons/ }).click()
-  await expect(page).toHaveURL(/\/admin\?categorie=boissons$/)
-  const section = page.locator('section[aria-labelledby="category-boissons"]')
-  await expect(section.getByRole('heading')).toHaveText('Boissons (à reclasser)')
-  // No new item is added to the retired category: nothing is preselected.
-  await expect(page.getByRole('link', { name: 'Ajouter un élément' })).toHaveAttribute('href', '/admin/menu/new?categorie=boissons')
-  await expect(section).toContainText('Cette catégorie n’existe plus')
-
-  await adminItem(page, 'Negroni').getByRole('link', { name: 'Modifier' }).click()
-  const select = page.getByLabel('Catégorie')
-  // Never preselected on a current category, and the retired one is not offered.
-  await expect(select).toHaveValue('')
-  await expect(select.locator('option:not([disabled])')).toHaveCount(11)
-  await expect(select.locator('option[value="boissons"]')).toHaveCount(0)
-  await expect(page.locator('#item-category-hint')).toContainText('ancienne catégorie « Boissons »')
-  await expect(select).toHaveAttribute('aria-describedby', 'item-category-hint')
-
-  // Saving without choosing is not possible.
-  await page.getByRole('button', { name: 'Enregistrer' }).click()
-  await expect(page).toHaveURL(new RegExp(`/admin/menu/${legacy.id}$`))
-  expect((await menuItem(legacy.id)).category_key).toBe('boissons')
-
-  await select.selectOption('spritz')
-  await page.getByRole('button', { name: 'Enregistrer' }).click()
-  // Back on the list of its new category.
-  await expect(page).toHaveURL(/\/admin\?categorie=spritz$/)
-  await expect(page.locator('section[aria-labelledby="category-spritz"] .admin-item-name')).toHaveText(['Spritz Test 1', 'Negroni'])
-  expect(await menuItem(legacy.id)).toMatchObject({ category_key: 'spritz', name: 'Negroni', price_cents: 900 })
-  // The other item still in the retired category is untouched.
-  await page.goto('/admin?categorie=boissons')
-  await expect(section.locator('.admin-item-name')).toHaveText(['Boisson Test 1'])
 })

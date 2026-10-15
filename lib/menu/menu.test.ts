@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { MENU_CATEGORIES, isLegacyCategoryKey, isMenuCategoryKey, isStoredCategoryKey } from './categories'
+import { MENU_CATEGORIES, isMenuCategoryKey } from './categories'
 import { formatPrice } from './format'
 import { groupByCategory, selectPreview, type PublicMenuItem } from './menu'
 
@@ -38,19 +38,15 @@ describe('menu categories', () => {
     expect(isMenuCategoryKey('../pizzas')).toBe(false)
   })
 
-  it('no longer offers the retired "boissons" category, but still recognises items stored in it', () => {
+  it('no longer knows the retired "boissons" category', () => {
     expect(isMenuCategoryKey('boissons')).toBe(false)
-    expect(isStoredCategoryKey('boissons')).toBe(true)
-    expect(isLegacyCategoryKey('boissons')).toBe(true)
-    expect(isLegacyCategoryKey('vins')).toBe(false)
-    expect(isStoredCategoryKey('sushis')).toBe(false)
-    expect(isLegacyCategoryKey('sushis')).toBe(false)
   })
 
-  it('matches the database constraint of migration 0004', () => {
-    const sql = fs.readFileSync('db/migrations/0004_expand_menu_categories.sql', 'utf8')
-    const allowed = [...sql.matchAll(/'([a-z_]+)'/g)].map((m) => m[1])
-    expect(new Set(allowed)).toEqual(new Set([...MENU_CATEGORIES.map((c) => c.key), 'boissons']))
+  it('matches the database constraint of migration 0005', () => {
+    const sql = fs.readFileSync('db/migrations/0005_remove_legacy_boissons_category.sql', 'utf8')
+    const constraint = sql.slice(sql.indexOf('ADD CONSTRAINT'))
+    const allowed = [...constraint.matchAll(/'([a-z_]+)'/g)].map((m) => m[1])
+    expect(allowed).toEqual(MENU_CATEGORIES.map((c) => c.key))
   })
 })
 
@@ -76,15 +72,6 @@ describe('groupByCategory', () => {
     ])
     expect(groups.map((g) => g.key)).toEqual(['antipasti', 'pizzas', 'desserts'])
     expect(groups[1].label).toBe('Pizza Napoletana')
-  })
-
-  it('lists items still in the retired "boissons" category after all the others', () => {
-    const groups = groupByCategory([
-      item({ id: 1, categoryKey: 'boissons' }),
-      item({ id: 2, categoryKey: 'sans_alcool' }),
-      item({ id: 3, categoryKey: 'spritz' }),
-    ])
-    expect(groups.map((g) => [g.key, g.label])).toEqual([['spritz', 'Spritz'], ['sans_alcool', 'Sans alcool'], ['boissons', 'Boissons']])
   })
 
   it('preserves the item order received from the query', () => {

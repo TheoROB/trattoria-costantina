@@ -1,20 +1,19 @@
 import 'server-only'
 import type mysql from 'mysql2/promise'
-import { STORED_CATEGORIES, isLegacyCategoryKey, isStoredCategoryKey, type StoredCategoryKey } from './categories'
+import { MENU_CATEGORIES, isMenuCategoryKey, type MenuCategoryKey } from './categories'
 import type { MenuItemInput } from './admin-input'
 
-// categoryKey may be a retired category: the item keeps it until it is moved to a current one.
 export type AdminMenuItem = Omit<MenuItemInput, 'categoryKey'> & {
-  categoryKey: StoredCategoryKey
+  categoryKey: MenuCategoryKey
   id: number
   position: number
   imageKey: string | null
 }
-export type AdminMenuCategory = { key: StoredCategoryKey; label: string; legacy: boolean; items: AdminMenuItem[] }
+export type AdminMenuCategory = { key: MenuCategoryKey; label: string; items: AdminMenuItem[] }
 export type MutationResult = 'ok' | 'not_found'
 // removedImageKey: photo no longer referenced once the transaction has committed (its files can go).
 export type PhotoMutationResult = { status: 'not_found' } | { status: 'ok'; removedImageKey: string | null }
-export type DeleteResult = { status: 'not_found' } | { status: 'ok'; removedImageKey: string | null; categoryKey: StoredCategoryKey }
+export type DeleteResult = { status: 'not_found' } | { status: 'ok'; removedImageKey: string | null; categoryKey: MenuCategoryKey }
 export type AuditAction =
   | 'menu_item.create'
   | 'menu_item.update'
@@ -100,10 +99,8 @@ async function lockItem(conn: mysql.PoolConnection, id: number) {
 
 export async function listAdminMenu(pool: mysql.Pool): Promise<AdminMenuCategory[]> {
   const [rows] = await pool.query<mysql.RowDataPacket[]>(`SELECT ${COLUMNS} FROM menu_items ORDER BY position, id`)
-  const items = rows.filter((r) => isStoredCategoryKey(r.category_key)).map(toItem)
-  return STORED_CATEGORIES.map(({ key, label }) => ({ key, label, legacy: isLegacyCategoryKey(key), items: items.filter((i) => i.categoryKey === key) }))
-    // A retired category is listed only while items remain to be moved out of it.
-    .filter((category) => !category.legacy || category.items.length > 0)
+  const items = rows.filter((r) => isMenuCategoryKey(r.category_key)).map(toItem)
+  return MENU_CATEGORIES.map(({ key, label }) => ({ key, label, items: items.filter((i) => i.categoryKey === key) }))
 }
 
 export async function getAdminMenuItem(pool: mysql.Pool, id: number) {

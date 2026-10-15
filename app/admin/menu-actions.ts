@@ -16,7 +16,7 @@ import {
   type MutationResult,
 } from '@/lib/menu/admin'
 import { formDataToObject, parseItemId, parseMenuItemForm, type FieldName } from '@/lib/menu/admin-input'
-import type { StoredCategoryKey } from '@/lib/menu/categories'
+import type { MenuCategoryKey } from '@/lib/menu/categories'
 import { discardMenuPhoto } from '@/lib/media/menu-photos'
 
 export type ItemFormState = {
@@ -70,12 +70,12 @@ function takePhotoPending(formData: FormData) {
 }
 
 // Back to the list, on the category of the item.
-function done(categoryKey: StoredCategoryKey) {
+function done(categoryKey: MenuCategoryKey) {
   revalidatePath('/admin')
   redirect(`/admin?categorie=${categoryKey}`)
 }
 
-function saved(id: number, categoryKey: StoredCategoryKey, photoPending: boolean): ItemFormState {
+function saved(id: number, categoryKey: MenuCategoryKey, photoPending: boolean): ItemFormState {
   if (!photoPending) done(categoryKey)
   revalidatePath('/admin')
   return { error: null, savedId: id }

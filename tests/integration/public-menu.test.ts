@@ -21,8 +21,6 @@ beforeAll(async () => {
     ['pizzas', 'Pizza sold out', 1300, 0, 1, 3],
     ['antipasti', 'Antipasto', 800, 1, 1, 0],
     ['spritz', 'Aperol Spritz', 800, 1, 1, 0],
-    // Retired category: still shown, after the others, until it is emptied.
-    ['boissons', 'Boisson', 300, 1, 1, 0],
   ]
   for (const [category_key, name, price_cents, is_available, is_visible, position] of rows) {
     await conn.query('INSERT INTO menu_items SET ?', [
@@ -38,7 +36,7 @@ describe('getPublicMenu', () => {
     const menu = await getPublicMenu()
     expect(menu.status).toBe('ok')
     if (menu.status !== 'ok') return
-    expect(menu.categories.map((c) => c.key)).toEqual(['antipasti', 'pizzas', 'spritz', 'boissons'])
+    expect(menu.categories.map((c) => c.key)).toEqual(['antipasti', 'pizzas', 'spritz'])
     expect(menu.categories[1].items.map((i) => i.name)).toEqual(['Pizza A', 'Pizza B', 'Pizza sold out'])
   })
 

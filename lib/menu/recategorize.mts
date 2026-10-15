@@ -1,13 +1,14 @@
-// Moves items out of a retired category (LEGACY_MENU_CATEGORIES) into current ones, for
-// scripts/menu-recategorize.mts. Plain .mts without `server-only` so the script can import it.
+// Moves items out of a retired category into current ones, for scripts/menu-recategorize.mts. Plain .mts without
+// `server-only` so the script can import it. Since migration 0005 the database rejects 'boissons': `list` is the
+// check to run on a database not yet migrated to 0005.
 import type mysql from 'mysql2/promise'
-import { LEGACY_MENU_CATEGORIES, MENU_CATEGORIES, isMenuCategoryKey, type MenuCategoryKey } from './categories.ts'
+import { MENU_CATEGORIES, isMenuCategoryKey, type MenuCategoryKey } from './categories.ts'
 
 export type LegacyItem = { id: number; categoryKey: string; name: string; priceCents: number }
 // Item id -> new category.
 export type Recategorization = Map<number, MenuCategoryKey>
 
-const LEGACY_KEYS = LEGACY_MENU_CATEGORIES.map((c) => c.key)
+const LEGACY_KEYS = ['boissons']
 
 async function selectLegacyItems(conn: mysql.Connection, lock: boolean) {
   const [rows] = await conn.query<mysql.RowDataPacket[]>(

@@ -68,27 +68,7 @@ describe('admin menu', () => {
       'antipasti', 'pates_plats', 'pizzas', 'desserts', 'spritz', 'aperitifs', 'bieres_pression', 'bieres_bouteille',
       'vins', 'digestifs', 'sans_alcool',
     ])
-    expect(list.every((c) => !c.legacy)).toBe(true)
     expect(list[2].items).toMatchObject([{ name: 'Cachée', isVisible: false, isAvailable: true, priceCents: 1150 }])
-  })
-
-  it('keeps items of the retired "boissons" category, listed last, until each one is given a new category', async () => {
-    await pool.query("INSERT INTO menu_items (category_key, name, price_cents, position) VALUES ('boissons', 'Coca', 300, 0), ('boissons', 'Chianti', 2400, 1)")
-    const list = await menu.listAdminMenu(pool)
-    expect(list.at(-1)).toMatchObject({ key: 'boissons', label: 'Boissons', legacy: true, items: [{ name: 'Coca' }, { name: 'Chianti' }] })
-    const [coca, chianti] = list.at(-1)!.items
-
-    // Toggles and moves keep working on an item still in the retired category.
-    expect(await menu.setMenuItemFlag(pool, julien, chianti.id, 'available', false)).toBe('ok')
-    expect(await menu.moveMenuItem(pool, julien, chianti.id, 'up')).toBe('ok')
-    expect(await names('boissons')).toEqual(['0:Chianti', '1:Coca'])
-
-    // Editing it moves it to its new category and renumbers what is left.
-    expect(await menu.updateMenuItem(pool, theo, chianti.id, input({ name: 'Chianti', categoryKey: 'vins', priceCents: 2400 }))).toBe('ok')
-    expect(await names('vins')).toEqual(['0:Chianti'])
-    expect(await names('boissons')).toEqual(['0:Coca'])
-    await menu.updateMenuItem(pool, theo, coca.id, input({ name: 'Coca', categoryKey: 'sans_alcool', priceCents: 300 }))
-    expect((await menu.listAdminMenu(pool)).map((c) => c.key)).not.toContain('boissons')
   })
 
   it('updates every field and audits it; a category change moves the item to the end and renumbers', async () => {

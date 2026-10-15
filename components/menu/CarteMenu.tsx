@@ -1,6 +1,6 @@
 import { variantUrl } from '@/lib/media/storage'
 import { formatPrice } from '@/lib/menu/format'
-import type { StoredCategoryKey } from '@/lib/menu/categories'
+import type { MenuCategoryKey } from '@/lib/menu/categories'
 import type { MenuCategoryGroup, PublicMenuItem } from '@/lib/menu/menu'
 import { CarteBrowser } from './CarteBrowser'
 import './carte.css'
@@ -8,7 +8,7 @@ import './carte.css'
 // Full menu (/carte). Every category is rendered here (all of it stays in the page for search engines and
 // assistive technologies); CarteBrowser shows one at a time. Dishes are compact cards with their photo when
 // there is one, drinks a one-line-per-item list. The home page preview keeps MenuCategories.
-const DISH_CATEGORIES: ReadonlySet<StoredCategoryKey> = new Set(['antipasti', 'pates_plats', 'pizzas', 'desserts'])
+const DISH_CATEGORIES: ReadonlySet<MenuCategoryKey> = new Set(['antipasti', 'pates_plats', 'pizzas', 'desserts'])
 
 export function CarteMenu({ categories }: { categories: MenuCategoryGroup[] }) {
   return (

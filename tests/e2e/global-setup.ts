@@ -24,8 +24,6 @@ export const E2E_MENU = [
   ['spritz', 'Spritz Test 1', 800, 1, 1, 1],
   ['vins', 'Vin Test 1', 2400, 1, 1, 1],
   ['sans_alcool', 'Soda Test 1', 350, 1, 1, 1],
-  // Retired category, as left by the data from before migration 0004.
-  ['boissons', 'Boisson Test 1', 300, 1, 1, 1],
 ] as const
 
 export default async function globalSetup() {

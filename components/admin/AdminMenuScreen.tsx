@@ -40,7 +40,6 @@ type Props = {
 
 // Menu management: category tabs, then the items of one category as a dense list.
 export function AdminMenuScreen({ categories, active, error, panel }: Props) {
-  const label = (category: AdminMenuCategory) => (category.legacy ? `${category.label} (à reclasser)` : category.label)
   return (
     <>
       <div className="admin-toolbar">
@@ -57,19 +56,16 @@ export function AdminMenuScreen({ categories, active, error, panel }: Props) {
       {categories && active && (
         <>
           <AdminCategoryNav
-            categories={categories.map((c) => ({ key: c.key, label: label(c), count: c.items.length }))}
+            categories={categories.map((c) => ({ key: c.key, label: c.label, count: c.items.length }))}
             active={active.key}
           />
           <section className="admin-category" aria-labelledby={`category-${active.key}`}>
             <div className="admin-category-header">
-              <h2 id={`category-${active.key}`}>{label(active)}</h2>
+              <h2 id={`category-${active.key}`}>{active.label}</h2>
               <span className="admin-category-count">
                 {active.items.length} élément{active.items.length > 1 ? 's' : ''}
               </span>
             </div>
-            {active.legacy && (
-              <p className="admin-hint">Cette catégorie n’existe plus. Modifiez chaque élément pour lui choisir sa nouvelle catégorie.</p>
-            )}
             <AdminItemList
               key={active.key}
               items={active.items.map((item) => ({
