@@ -42,7 +42,7 @@ describe('buildRestaurantJsonLd', () => {
       '@type': 'Restaurant',
       name: 'Trattoria Costantina',
       url: `${origin}/`,
-      image: `${origin}/images/hero/1280.webp`,
+      image: `${origin}/images/og/1280.jpg`,
       telephone: '+33978813295',
       email: 'trattoria.costantina@gmail.com',
       address: {

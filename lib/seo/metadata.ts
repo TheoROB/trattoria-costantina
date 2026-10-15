@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { site } from '@/lib/site'
 
-// Hero photo (terrace), an existing variant from scripts/optimize-images.mjs.
+// Hero photo (terrace) as JPEG: link previews (Facebook, WhatsApp, LinkedIn...) do not all accept WebP.
 export const OG_IMAGE = {
-  url: '/images/hero/1280.webp',
+  url: '/images/og/1280.jpg',
+  type: 'image/jpeg',
   width: 1280,
   height: 720,
   alt: 'Terrasse de la Trattoria Costantina : longue table en bois sous une arche et une treille de vigne',

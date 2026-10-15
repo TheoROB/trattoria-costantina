@@ -17,7 +17,7 @@ for (const { path, title } of pages) {
     expect(new URL((await page.locator('meta[property="og:url"]').getAttribute('content'))!).href).toBe(url)
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', title)
     await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute('content', 'fr_FR')
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new URL('/images/hero/1280.webp', baseURL).href)
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new URL('/images/og/1280.jpg', baseURL).href)
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image')
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
 
@@ -27,9 +27,9 @@ for (const { path, title } of pages) {
 }
 
 test('the Open Graph image is served', async ({ request }) => {
-  const res = await request.get('/images/hero/1280.webp')
+  const res = await request.get('/images/og/1280.jpg')
   expect(res.status()).toBe(200)
-  expect(res.headers()['content-type']).toBe('image/webp')
+  expect(res.headers()['content-type']).toBe('image/jpeg')
 })
 
 test('/mentions-legales stays out of the index and has its own canonical', async ({ page, baseURL }) => {
