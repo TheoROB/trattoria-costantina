@@ -336,9 +336,18 @@ test.describe('a quick change being saved', () => {
   test('a failed save cancels the navigation asked for meanwhile and rolls back', async ({ page }) => {
     await login(page, 'julien')
     await page.goto('/admin?categorie=desserts')
-    await page.route(isAction, (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()))
+    // The save fails only once the navigation has been asked for (an immediate abort could finish before the click).
+    let fail!: () => void
+    const failing = new Promise<void>((resolve) => (fail = resolve))
+    await page.route(isAction, async (route) => {
+      if (route.request().method() !== 'POST') return route.continue()
+      await failing
+      await route.abort()
+    })
     await adminItem(page, item.name).getByRole('button', { name: 'Masquer' }).click()
     await tabs(page).getByRole('link', { name: /^Antipasti/ }).click()
+    await expect(saving(page)).toBeVisible()
+    fail()
     await expect(page.getByRole('alert').filter({ hasText: 'La modification n’a pas pu être enregistrée' })).toBeVisible()
     await expect(adminItem(page, item.name).getByRole('button', { name: 'Masquer' })).toHaveText('Visible')
     await expect(page).toHaveURL(/categorie=desserts$/)

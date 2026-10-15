@@ -31,6 +31,8 @@ export function readMailConfig(env: Record<string, string | undefined> = process
   const password = env.SMTP_PASSWORD ?? ''
   if (!password) problems.push('SMTP_PASSWORD missing')
   const from = value('CONTACT_FROM')
+  // No fallback to site.email: a forgotten CONTACT_TO disables the form instead of letting a test or
+  // staging server mail the restaurant.
   const to = value('CONTACT_TO')
   if (from && !isEmail(from)) problems.push('CONTACT_FROM invalid')
   if (to && !isEmail(to)) problems.push('CONTACT_TO invalid')

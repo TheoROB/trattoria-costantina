@@ -87,7 +87,24 @@ test('the home page exposes the Restaurant structured data', async ({ page, base
     url: new URL('/', baseURL).href,
     telephone: '+33978813295',
     address: { postalCode: '62110', addressLocality: 'Hénin-Beaumont' },
+    servesCuisine: 'Italian',
+    hasMenu: new URL('/carte', baseURL).href,
+    openingHoursSpecification: [
+      { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '12:00', closes: '13:30' },
+      { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Thursday', 'Friday', 'Saturday'], opens: '19:00', closes: '21:30' },
+    ],
   })
-  expect(restaurant).not.toHaveProperty('openingHours')
+  expect(restaurant).not.toHaveProperty('priceRange')
   expect(restaurant).not.toHaveProperty('sameAs')
+})
+
+test('the structured data image and logo are served', async ({ page, request }) => {
+  await page.goto('/')
+  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents()
+  const restaurant = blocks.map((b) => JSON.parse(b)).find((d) => d['@type'] === 'Restaurant')
+  for (const key of ['image', 'logo']) {
+    const res = await request.get(restaurant[key])
+    expect(res.status(), key).toBe(200)
+    expect(res.headers()['content-type'], key).toMatch(/^image\//)
+  }
 })

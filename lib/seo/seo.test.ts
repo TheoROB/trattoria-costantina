@@ -43,6 +43,7 @@ describe('buildRestaurantJsonLd', () => {
       name: 'Trattoria Costantina',
       url: `${origin}/`,
       image: `${origin}/images/og/1280.jpg`,
+      logo: `${origin}/images/logo/480.png`,
       telephone: '+33978813295',
       email: 'trattoria.costantina@gmail.com',
       address: {
@@ -53,14 +54,32 @@ describe('buildRestaurantJsonLd', () => {
         addressCountry: 'FR',
       },
       servesCuisine: 'Italian',
+      openingHoursSpecification: [
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          opens: '12:00',
+          closes: '13:30',
+        },
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Thursday', 'Friday', 'Saturday'],
+          opens: '19:00',
+          closes: '21:30',
+        },
+      ],
       acceptsReservations: true,
       hasMenu: `${origin}/carte`,
       foundingDate: '2024-02-05',
     })
   })
 
-  it('never states unconfirmed data (hours, prices, social networks)', () => {
-    for (const key of ['openingHours', 'openingHoursSpecification', 'priceRange', 'sameAs', 'aggregateRating']) {
+  it('never mentions Sunday, when the restaurant is closed', () => {
+    expect(JSON.stringify(data.openingHoursSpecification)).not.toContain('Sunday')
+  })
+
+  it('never states unconfirmed data (prices, social networks, ratings)', () => {
+    for (const key of ['openingHours', 'priceRange', 'sameAs', 'aggregateRating']) {
       expect(data).not.toHaveProperty(key)
     }
   })

@@ -43,6 +43,8 @@ test('the contact section shows a labelled form, the privacy notice and a hidden
   for (const label of ['Nom', 'E-mail', 'Message']) await expect(form.getByLabel(label)).toBeVisible()
   await expect(form.getByLabel(/Téléphone/)).not.toHaveAttribute('required')
   await expect(form.getByText(/uniquement pour répondre à votre demande/)).toBeVisible()
+  await expect(form.getByRole('link', { name: 'données personnelles' })).toHaveAttribute('href', '/mentions-legales#donnees-personnelles')
+  await expect(form.getByRole('link', { name: 'trattoria.costantina@gmail.com' })).toHaveAttribute('href', 'mailto:trattoria.costantina@gmail.com')
   await expect(form.getByRole('button', { name: 'Envoyer le message' })).toBeEnabled()
 
   const trap = form.locator('input[name="website"]')
@@ -155,6 +157,7 @@ test('a valid message is sent as plain text to the restaurant and the form is cl
   expect(sink!.messages).toHaveLength(1)
   const raw = sink!.messages[0]
   const headers = raw.split('\n\n')[0]
+  expect(headers).toMatch(/^From: .*<site@example\.test>$/m)
   expect(headers).toMatch(/^To: restaurant@example\.test$/m)
   expect(headers).toMatch(/^Reply-To: .*marie@example\.test/m)
   expect(headers).toMatch(/^Content-Type: text\/plain/m)

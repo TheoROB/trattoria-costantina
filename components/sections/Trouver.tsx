@@ -1,9 +1,15 @@
 import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
 import { Picture } from '@/components/Picture'
-import { practicalInfo, site } from '@/lib/site'
+import { openingHours, practicalInfo, site } from '@/lib/site'
 
 // Mirrors .trouver-grid / .trouver-photos: 2 columns of a 2-column grid inside the 1200px container.
 const photoSizes = '(max-width: 640px) calc(100vw - 64px), (max-width: 900px) calc(50vw - 38px), (max-width: 1200px) calc(25vw - 34px), 266px'
+
+// "12:00" -> "12h", "13:30" -> "13h30"
+function formatTime(time: string) {
+  const [hours, minutes] = time.split(':')
+  return `${Number(hours)}h${minutes === '00' ? '' : minutes}`
+}
 
 export function Trouver() {
   return (
@@ -55,6 +61,25 @@ export function Trouver() {
 
           <div className="horaires-card">
             <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              Horaires d&apos;ouverture
+            </h3>
+            <ul className="horaires">
+              {openingHours.map(({ day, slots }) => (
+                <li key={day}>
+                  <span className="jour">{day}</span>
+                  {slots.length > 0 ? (
+                    <span className="heures">
+                      {slots.map((slot) => `${formatTime(slot.opens)} – ${formatTime(slot.closes)}`).join(' / ')}
+                    </span>
+                  ) : (
+                    <span className="heures ferme-text">Fermé</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <h3>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
               Infos pratiques
             </h3>
@@ -68,7 +93,7 @@ export function Trouver() {
             </ul>
             <div className="horaires-note">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-              <p>Pour connaître nos horaires ou organiser un repas de groupe, appelez-nous au <a href={site.phone.href}>{site.phone.display}</a>.</p>
+              <p>Pour organiser un repas de groupe ou une privatisation, appelez-nous au <a href={site.phone.href}>{site.phone.display}</a>.</p>
             </div>
           </div>
         </div>

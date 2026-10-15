@@ -720,6 +720,9 @@ select:focus { border-color: var(--terracotta); }
 
 .horaires-card h3 svg { color: var(--terracotta); }
 
+/* Second list of the card (practical info under the opening hours). */
+.horaires + h3 { margin-top: 2rem; }
+
 .horaires {
   display: flex;
   flex-direction: column;

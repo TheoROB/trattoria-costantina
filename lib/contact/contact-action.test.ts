@@ -54,7 +54,11 @@ describe('sendContact', () => {
     const state = await sendContact(INITIAL_CONTACT_STATE, form())
     expect(state).toEqual({ status: 'success', message: CONTACT_MESSAGES.sent, fieldErrors: {}, values: INITIAL_CONTACT_STATE.values })
     expect(sendMail).toHaveBeenCalledOnce()
-    expect(sendMail.mock.calls[0][0]).toMatchObject({ to: 'restaurant@example.fr', replyTo: { address: 'marie@example.fr' } })
+    expect(sendMail.mock.calls[0][0]).toMatchObject({
+      from: { address: 'contact@example.fr' },
+      to: 'restaurant@example.fr',
+      replyTo: { address: 'marie@example.fr' },
+    })
   })
 
   it('fakes a success without sending when the honeypot is filled', async () => {

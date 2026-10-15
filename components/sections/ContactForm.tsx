@@ -72,8 +72,9 @@ export function ContactForm() {
 
       <p id="contact-privacy" className="contact-privacy">
         Vos coordonnées et votre message sont transmis par e-mail à la {site.name}, uniquement pour répondre à votre
-        demande. Ils ne sont pas enregistrés sur ce site ni utilisés à d’autres fins. Pour toute question sur vos données,
-        écrivez-nous à <a href={site.email.href}>{site.email.display}</a> (<Link href="/mentions-legales">mentions légales</Link>).
+        demande. Ils ne sont pas enregistrés sur ce site ni utilisés à d’autres fins. Pour accéder à vos données, les
+        rectifier ou les faire effacer, écrivez-nous à <a href={site.email.href}>{site.email.display}</a> (
+        <Link href="/mentions-legales#donnees-personnelles">données personnelles</Link>).
       </p>
 
       <div role="status" aria-live="polite" className={`contact-status contact-status-${state.status}`}>

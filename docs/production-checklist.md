@@ -12,7 +12,11 @@ a chat or a shell command line (it lands in the shell history): use `read -rs` a
 | `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | yes | base64 of a 16/24/32-byte AES key. Read by `next build` and embedded in the build: must be set **before** the build, same value for every process. |
 | `APP_ORIGIN` | yes | `https://trattoriacostantina.fr`. Photo uploads are refused (500, logged) without it. |
 | `MEDIA_ROOT` | yes | Absolute path outside the application, e.g. `/home/<user>/domains/<domain>/trattoria-media`. Refused if relative, `/`, inside the app directory (so `public/`, `.next/`) or under `hbuilds/` (replaced at every deployment). Unset or invalid: uploads fail and `/media/*` answers 404, both logged. |
-| `AUTH_TRUSTED_IP_HEADER` | no | Leave empty until the proxy header is verified. |
+| `AUTH_TRUSTED_IP_HEADER` | no | Leave empty until a proxy header is formally verified as not client-controllable. Empty: no per-IP limits, only the global contact cap (30/h) and the per-account login lockout apply. |
+| `SMTP_HOST`, `SMTP_PORT` | yes (contact) | `smtp.hostinger.com`, `465` (implicit TLS; leave `SMTP_SECURE` empty). |
+| `SMTP_USER`, `SMTP_PASSWORD` | yes (contact) | Sending mailbox created in hPanel → Emails, and its password (secret). |
+| `CONTACT_FROM` | yes (contact) | Exactly `SMTP_USER`, otherwise Hostinger rejects the mail or it lands in spam. |
+| `CONTACT_TO` | yes (contact) | `trattoria.costantina@gmail.com`. No fallback: without it the form shows "temporarily unavailable". |
 | `HOSTINGER_PROBE_TOKEN` | **no — delete** | Only used by the throwaway `chore/hostinger-probe` branch; nothing in the production code reads it. |
 
 Never upload a `.env*` file: `next start` would load `.env.local` / `.env.production` from the app directory.
@@ -88,3 +92,48 @@ sessions, and photo upload limits (`media_upload_attempts`) are keyed by account
 
 Delete the variable in hPanel (and any test application deployed from `chore/hostinger-probe`). Check:
 `/api/hostinger-probe` answers 404 on production.
+
+## Contact form (SMTP Hostinger)
+
+- [ ] Create the sending mailbox in hPanel → Emails (e.g. `contact@<domain>`) and note its password.
+- [ ] Set the `SMTP_*` and `CONTACT_*` variables above in the Hostinger Node.js environment (never in the repository).
+- [ ] Check SPF/DKIM for the domain in hPanel (records created by Hostinger for its mail service).
+- [ ] After deploying: send a message from the site, check it arrives at trattoria.costantina@gmail.com (also check
+      spam), that "Reply" targets the visitor, and that the logs contain no address or message text.
+- [ ] If the logs show `[contact] form disabled, mail configuration incomplete: …`, a variable is missing (only names
+      are listed).
+
+## Backups
+
+### Database
+
+hPanel → Databases → backups (daily automatic backups depend on the plan: check they are enabled). Before every
+`npm run db:migrate` or bulk change, take a manual export: hPanel → phpMyAdmin → Export (SQL), or over SSH if
+`mysqldump` is available:
+
+```sh
+read -rs DATABASE_URL && export DATABASE_URL
+node -e 'const u=new URL(process.env.DATABASE_URL);console.log(u.hostname,u.port||3306,decodeURIComponent(u.username),u.pathname.slice(1))'
+mysqldump -h <host> -P <port> -u <user> -p <database> > trattoria-$(date +%F).sql   # password prompt, not on the command line
+unset DATABASE_URL
+```
+
+Keep the dump off the server (it contains the admin accounts' password hashes). Restore check: import it into a
+scratch database once, and check that `/carte` lists the menu.
+
+### `MEDIA_ROOT`
+
+Menu photos live only in `MEDIA_ROOT` (outside the build, not covered by redeployments nor by the database backup).
+Back it up together with the database dump (the keys in `menu_items.image_key` must match the files):
+
+```sh
+tar -czf trattoria-media-$(date +%F).tar.gz -C "$(dirname "$MEDIA_ROOT")" "$(basename "$MEDIA_ROOT")"
+```
+
+Check that the Hostinger file backups include that directory, or download the archive.
+
+## Hostinger account
+
+- Enable two-factor authentication on the Hostinger account (hPanel → Account → Security → 2FA) for every person
+  with access, and keep the recovery codes outside the account.
+- Check that "Force HTTPS" is enabled for the domain and the SSL certificate auto-renews.
