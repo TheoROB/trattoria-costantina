@@ -50,7 +50,7 @@ test('the legal notice has the personal data section linked from the contact for
   await expect(main).toContainText('Le responsable du traitement est la société COSTANTINA')
   await expect(main).toContainText('formulaire de contact')
   await expect(main).toContainText('ne sont pas enregistrées dans la base de données du site')
-  await expect(main).toContainText("via le service de messagerie de l'hébergeur Hostinger, et reçues dans la boîte Gmail (Google) du restaurant")
+  await expect(main).toContainText("via le service d'envoi d'e-mails Resend (Resend, Inc., États-Unis), et reçues dans la boîte Gmail (Google) du restaurant")
   for (const right of ['accès', 'rectification', 'effacement', 'opposition', 'limitation']) {
     await expect(main, right).toContainText(right)
   }

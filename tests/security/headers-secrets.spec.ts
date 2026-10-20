@@ -99,11 +99,19 @@ test('admin HTML, RSC responses and server logs never expose credentials or secr
   const loginDocument = await page.goto('/admin/login')
   if (!loginDocument) throw new Error('Missing login document response')
   responseBodies.push(await loginDocument.text())
-  const loginActionPromise = page.waitForResponse(
-    (response) => response.request().method() === 'POST' && Boolean(response.request().headers()['next-action']),
-  )
+  // The action's redirect navigates away before a waitForResponse body can be read, so capture it in a route.
+  let loginActionBody: string | undefined
+  await page.route('**/admin/login', async (route) => {
+    const request = route.request()
+    if (request.method() !== 'POST' || !request.headers()['next-action']) return route.fallback()
+    const response = await route.fetch({ maxRedirects: 0 })
+    loginActionBody = await response.text()
+    await route.fulfill({ response })
+  })
   await login(page)
-  responseBodies.push(await (await loginActionPromise).text())
+  await page.unroute('**/admin/login')
+  if (loginActionBody === undefined) throw new Error('Missing login action response')
+  responseBodies.push(loginActionBody)
   const token = await sessionToken(context)
   for (const path of ['/admin/menu/new', '/admin']) {
     const response = await page.goto(path)
@@ -137,6 +145,8 @@ test('admin HTML, RSC responses and server logs never expose credentials or secr
     if (value) forbidden.push(value)
   }
   if (process.env.DATABASE_URL_TEST) forbidden.push(process.env.DATABASE_URL_TEST)
+  // Its name is logged when the contact form is not configured; its value never is.
+  if (process.env.RESEND_API_KEY?.trim()) forbidden.push(process.env.RESEND_API_KEY.trim())
 
   for (const secret of forbidden) expect(inspected).not.toContain(secret)
 })

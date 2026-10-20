@@ -55,9 +55,9 @@ export default function MentionsLegalesPage() {
         <p>
           Le responsable du traitement est la société {site.company.name} ({site.company.legalForm}), éditrice du
           site. Les informations saisies dans le formulaire de contact servent uniquement à répondre à votre
-          demande : elles sont transmises par e-mail au restaurant, via le service de messagerie de l&apos;hébergeur
-          Hostinger, et reçues dans la boîte Gmail (Google) du restaurant. Elles ne sont pas enregistrées dans la base
-          de données du site.
+          demande : elles sont transmises par e-mail au restaurant, via le service d&apos;envoi d&apos;e-mails Resend
+          (Resend, Inc., États-Unis), et reçues dans la boîte Gmail (Google) du restaurant. Elles ne sont pas
+          enregistrées dans la base de données du site.
         </p>
         <p>
           Conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et

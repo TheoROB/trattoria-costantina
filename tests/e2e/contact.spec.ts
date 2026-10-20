@@ -1,25 +1,27 @@
+import fs from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
-import { startSmtpSink } from './smtp-sink'
+import { startResendDouble } from './resend-double'
 
 // The e2e server inherits this process's environment (and .env.local). Three modes:
-// - no SMTP_HOST: the form must answer "temporarily unavailable";
-// - SMTP_HOST=127.0.0.1 + SMTP_PORT: a local sink receives the mails (success path), e.g.
-//   SMTP_HOST=127.0.0.1 SMTP_PORT=2526 SMTP_SECURE=false SMTP_USER=e2e SMTP_PASSWORD=e2e \
-//   CONTACT_FROM=site@example.test CONTACT_TO=restaurant@example.test npx playwright test contact
-// - any other SMTP_HOST: real mails could be sent, so the sending tests are skipped.
-const smtpHost = process.env.SMTP_HOST?.trim()
-const sinkPort = smtpHost === '127.0.0.1' ? Number(process.env.SMTP_PORT) : null
-const realSmtp = !!smtpHost && sinkPort === null
+// - no RESEND_API_KEY: the form must answer "temporarily unavailable";
+// - RESEND_BASE_URL=http://127.0.0.1:<port>: a local Resend double receives the mails (success path), e.g.
+//   RESEND_BASE_URL=http://127.0.0.1:3790 RESEND_API_KEY=e2e-only-key \
+//   CONTACT_FROM='Trattoria Costantina <site@example.test>' CONTACT_TO=restaurant@example.test npx playwright test contact
+// - RESEND_API_KEY without RESEND_BASE_URL: real mails could be sent, so the sending tests are skipped.
+const apiKey = process.env.RESEND_API_KEY?.trim()
+const baseUrl = process.env.RESEND_BASE_URL?.trim()
+const doublePort = baseUrl && new URL(baseUrl).hostname === '127.0.0.1' ? Number(new URL(baseUrl).port) : null
+const realResend = !!apiKey && doublePort === null
 
-// One worker for the whole file: the sink listens on a fixed port.
+// One worker for the whole file: the double listens on a fixed port.
 test.describe.configure({ mode: 'serial' })
 
-let sink: Awaited<ReturnType<typeof startSmtpSink>> | null = null
+let resend: Awaited<ReturnType<typeof startResendDouble>> | null = null
 test.beforeAll(async () => {
-  if (sinkPort) sink = await startSmtpSink(sinkPort)
+  if (doublePort) resend = await startResendDouble(doublePort)
 })
 test.afterAll(async () => {
-  await sink?.close()
+  await resend?.close()
 })
 
 const SENT = 'Merci, votre message a bien été envoyé.'
@@ -106,17 +108,17 @@ test('the form also validates on the server without JavaScript', async ({ browse
 })
 
 test('a filled spam trap gets a fake success and no mail', async ({ page }) => {
-  test.skip(realSmtp, 'SMTP_HOST points to a real server')
+  test.skip(realResend, 'RESEND_API_KEY targets the real Resend API')
   const form = await openForm(page)
   await fillValid(page)
   await form.locator('input[name="website"]').evaluate((el: HTMLInputElement) => (el.value = 'https://spam.example'))
   await form.getByRole('button', { name: 'Envoyer le message' }).click()
   await expect(form.getByRole('status')).toContainText(SENT)
-  expect(sink?.messages ?? []).toHaveLength(0)
+  expect(resend?.requests ?? []).toHaveLength(0)
 })
 
 test('the button is disabled while sending', async ({ page }) => {
-  test.skip(realSmtp, 'SMTP_HOST points to a real server')
+  test.skip(realResend, 'RESEND_API_KEY targets the real Resend API')
   const form = await openForm(page)
   await fillValid(page)
   // Spam trap filled: the server answers without sending anything.
@@ -136,7 +138,7 @@ test('the button is disabled while sending', async ({ page }) => {
 })
 
 test('without mail configuration the visitor is told to call', async ({ page }) => {
-  test.skip(!!smtpHost, 'SMTP is configured for this run')
+  test.skip(!!apiKey, 'Resend is configured for this run')
   const form = await openForm(page)
   await fillValid(page)
   await form.getByRole('button', { name: 'Envoyer le message' }).click()
@@ -145,21 +147,34 @@ test('without mail configuration the visitor is told to call', async ({ page }) 
   await expect(form.getByLabel('Message')).toHaveValue(TEXT)
 })
 
-test('a valid message is sent as plain text to the restaurant and the form is cleared', async ({ page }) => {
-  test.skip(!sink, 'needs the local SMTP sink (SMTP_HOST=127.0.0.1)')
+test('a valid message is sent once as plain text to the restaurant and the form is cleared', async ({ page }) => {
+  test.skip(!resend, 'needs the local Resend double (RESEND_BASE_URL=http://127.0.0.1:<port>)')
   const form = await openForm(page)
   await fillValid(page)
-  await form.getByRole('button', { name: 'Envoyer le message' }).click()
+  const button = form.getByRole('button', { name: 'Envoyer le message' })
+  // A double click must not send twice: the button is disabled as soon as the first submission starts.
+  await button.dblclick()
   await expect(form.getByRole('status')).toContainText(SENT)
   await expect(form.getByLabel('Message')).toHaveValue('')
   await expect(form.getByLabel('Nom')).toHaveValue('')
 
-  expect(sink!.messages).toHaveLength(1)
-  const raw = sink!.messages[0]
-  const headers = raw.split('\n\n')[0]
-  expect(headers).toMatch(/^From: .*<site@example\.test>$/m)
-  expect(headers).toMatch(/^To: restaurant@example\.test$/m)
-  expect(headers).toMatch(/^Reply-To: .*marie@example\.test/m)
-  expect(headers).toMatch(/^Content-Type: text\/plain/m)
-  expect(raw).not.toMatch(/text\/html/i)
+  expect(resend!.requests).toHaveLength(1)
+  const { authorization, userAgent, body } = resend!.requests[0]
+  expect(authorization).toBe(`Bearer ${apiKey}`)
+  expect(userAgent).toBeTruthy()
+  expect(body).toEqual({
+    from: process.env.CONTACT_FROM?.trim(),
+    to: [process.env.CONTACT_TO?.trim()],
+    reply_to: 'marie@example.test',
+    subject: 'Message du site : Marie Dupont',
+    text: expect.stringContaining(TEXT),
+  })
+  expect(body.text).toContain('Téléphone : 06 12 34 56 78')
+})
+
+test('the server log never shows the API key nor what visitors typed', async () => {
+  const log = fs.readFileSync('.e2e-logs/server.log', 'utf8')
+  for (const forbidden of [apiKey, TEXT, 'marie@example.test', '06 12 34 56 78']) {
+    if (forbidden) expect(log).not.toContain(forbidden)
+  }
 })

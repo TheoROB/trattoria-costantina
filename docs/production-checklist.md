@@ -13,10 +13,10 @@ a chat or a shell command line (it lands in the shell history): use `read -rs` a
 | `APP_ORIGIN` | yes | `https://trattoriacostantina.fr`. Photo uploads are refused (500, logged) without it. |
 | `MEDIA_ROOT` | yes | Absolute path outside the application, e.g. `/home/<user>/domains/<domain>/trattoria-media`. Refused if relative, `/`, inside the app directory (so `public/`, `.next/`) or under `hbuilds/` (replaced at every deployment). Unset or invalid: uploads fail and `/media/*` answers 404, both logged. |
 | `AUTH_TRUSTED_IP_HEADER` | no | Leave empty until a proxy header is formally verified as not client-controllable. Empty: no per-IP limits, only the global contact cap (30/h) and the per-account login lockout apply. |
-| `SMTP_HOST`, `SMTP_PORT` | yes (contact) | `smtp.hostinger.com`, `465` (implicit TLS; leave `SMTP_SECURE` empty). |
-| `SMTP_USER`, `SMTP_PASSWORD` | yes (contact) | Sending mailbox created in hPanel → Emails, and its password (secret). |
-| `CONTACT_FROM` | yes (contact) | Exactly `SMTP_USER`, otherwise Hostinger rejects the mail or it lands in spam. |
+| `RESEND_API_KEY` | yes (contact) | Resend API key, "Sending access" restricted to `trattoriacostantina.fr` (secret). |
+| `CONTACT_FROM` | yes (contact) | `Trattoria Costantina <site@trattoriacostantina.fr>`. Must be on the domain verified at Resend, otherwise Resend refuses the mail (logged `HTTP 403 validation_error`). |
 | `CONTACT_TO` | yes (contact) | `trattoria.costantina@gmail.com`. No fallback: without it the form shows "temporarily unavailable". |
+| `RESEND_BASE_URL` | **no — never set** | Tests only (local Resend double, loopback only). Any non-loopback value disables the form. |
 | `HOSTINGER_PROBE_TOKEN` | **no — delete** | Only used by the throwaway `chore/hostinger-probe` branch; nothing in the production code reads it. |
 
 Never upload a `.env*` file: `next start` would load `.env.local` / `.env.production` from the app directory.
@@ -93,15 +93,20 @@ sessions, and photo upload limits (`media_upload_attempts`) are keyed by account
 Delete the variable in hPanel (and any test application deployed from `chore/hostinger-probe`). Check:
 `/api/hostinger-probe` answers 404 on production.
 
-## Contact form (SMTP Hostinger)
+## Contact form (Resend)
 
-- [ ] Create the sending mailbox in hPanel → Emails (e.g. `contact@<domain>`) and note its password.
-- [ ] Set the `SMTP_*` and `CONTACT_*` variables above in the Hostinger Node.js environment (never in the repository).
-- [ ] Check SPF/DKIM for the domain in hPanel (records created by Hostinger for its mail service).
-- [ ] After deploying: send a message from the site, check it arrives at trattoria.costantina@gmail.com (also check
-      spam), that "Reply" targets the visitor, and that the logs contain no address or message text.
-- [ ] If the logs show `[contact] form disabled, mail configuration incomplete: …`, a variable is missing (only names
-      are listed).
+- [ ] Resend → Domains: `trattoriacostantina.fr` is **Verified** (SPF and DKIM records added in hPanel → DNS; keep any
+      existing SPF record for other senders merged into a single `v=spf1` record). Optional but recommended: a DMARC record.
+- [ ] Resend → API Keys: create a key with "Sending access" restricted to `trattoriacostantina.fr`. Copy it straight into
+      hPanel (`RESEND_API_KEY`); never paste it anywhere else. Revoke the key in Resend if it ever leaks.
+- [ ] Set `RESEND_API_KEY`, `CONTACT_FROM` and `CONTACT_TO` (table above) in the Hostinger Node.js environment, and make
+      sure `RESEND_BASE_URL` is **not** set. Remove the old `SMTP_*` variables if they are still there (no longer read).
+- [ ] After deploying: send a real message from the site, check it arrives at trattoria.costantina@gmail.com (also check
+      spam), with the expected sender, that "Reply" targets the visitor, and that it appears in Resend → Emails as delivered.
+- [ ] Check the logs contain no address, message text or API key. Only these lines are expected:
+      - `[contact] form disabled, mail configuration incomplete: …`: a variable is missing or invalid (only names are listed);
+      - `[contact] send failed: HTTP <status> [<resend error name>]`, `… timeout` or `… network error`: Resend refused or
+        could not be reached (e.g. `HTTP 401`/`403`: wrong key or unverified domain, `HTTP 429`: quota or rate limit).
 
 ## Backups
 
