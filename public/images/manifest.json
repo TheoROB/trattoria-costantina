@@ -111,7 +111,7 @@
       }
     ]
   },
-  "trouver-facade": {
+  "galerie-facade": {
     "formats": [
       "avif",
       "webp"
@@ -119,15 +119,19 @@
     "variants": [
       {
         "width": 400,
-        "height": 300
+        "height": 533
       },
       {
         "width": 800,
-        "height": 600
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
       }
     ]
   },
-  "trouver-terrasse": {
+  "galerie-terrasse": {
     "formats": [
       "avif",
       "webp"
@@ -135,11 +139,115 @@
     "variants": [
       {
         "width": 400,
-        "height": 300
+        "height": 533
       },
       {
         "width": 800,
-        "height": 600
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
+      }
+    ]
+  },
+  "galerie-salle": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 533
+      },
+      {
+        "width": 800,
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
+      }
+    ]
+  },
+  "galerie-table": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 533
+      },
+      {
+        "width": 800,
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
+      }
+    ]
+  },
+  "galerie-bar": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 533
+      },
+      {
+        "width": 800,
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
+      }
+    ]
+  },
+  "galerie-treille": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 533
+      },
+      {
+        "width": 800,
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
+      }
+    ]
+  },
+  "galerie-livre": {
+    "formats": [
+      "avif",
+      "webp"
+    ],
+    "variants": [
+      {
+        "width": 400,
+        "height": 533
+      },
+      {
+        "width": 800,
+        "height": 1067
+      },
+      {
+        "width": 1280,
+        "height": 1707
       }
     ]
   },

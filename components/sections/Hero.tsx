@@ -7,9 +7,9 @@ export function Hero() {
       <div className="hero-bg">
         <Picture
           image="hero"
-          alt="Terrasse de la Trattoria Costantina : longue table en bois sous une arche et une treille de vigne"
+          alt="Terrasse de la Trattoria Costantina : longue table dressée de nappes à carreaux rouges sous une arche et une treille de vigne"
           sizes="max(100vw, 178vh)"
-          artDirection={[{ image: 'hero-portrait', media: '(max-width: 640px)', sizes: 'max(100vw, 80vh)' }]}
+          artDirection={[{ image: 'hero-portrait', media: '(max-aspect-ratio: 1/1)', sizes: 'max(100vw, 80vh)' }]}
           priority
         />
         <div className="hero-overlay"></div>

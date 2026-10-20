@@ -8,7 +8,7 @@ export function Famille() {
       <div className="famille-bg">
         <Picture
           image="famille"
-          alt="Table pour deux sur la terrasse, devant un mur ocre et une fenêtre ornée de petits vases colorés"
+          alt="Salle du restaurant : mur de photos de famille en noir et blanc et suspensions dorées"
           sizes="100vw"
           artDirection={[{ image: 'famille-portrait', media: '(max-width: 640px)', sizes: 'max(100vw, 384px)' }]}
         />

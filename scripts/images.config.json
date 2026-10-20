@@ -1,52 +1,75 @@
 {
-  "$comment": "Source mapping for scripts/optimize-images.mjs. Crops are fractions of the auto-oriented source (left, top, width, height). Widths derive from globals.css: container 1200px, 2-column grids, 2x screens.",
+  "$comment": "Source mapping for scripts/optimize-images.mjs. Crops are fractions of the auto-oriented source (left, top, width, height). Widths derive from globals.css: container 1200px, 2-column grids, 2x screens. galerie-* keys are uncropped: the thumbnails crop them in CSS, the lightbox shows them whole.",
   "images": {
     "hero": {
-      "source": "20260929_143647_9220.jpeg",
+      "source": "repo:assets/hero-table-dressee.jpg",
       "crop": { "left": 0, "top": 0.33, "width": 1, "height": 0.421875 },
       "widths": [1280, 1920, 2560],
       "formats": ["avif", "webp"]
     },
     "hero-portrait": {
-      "source": "20260929_143647_9220.jpeg",
+      "source": "repo:assets/hero-table-dressee.jpg",
       "crop": { "left": 0, "top": 0.0625, "width": 1, "height": 0.9375 },
       "widths": [640, 960, 1280],
       "formats": ["avif", "webp"]
     },
     "histoire": {
-      "source": "20260929_143336_5670.jpeg",
+      "source": "20260929_143457_1130.jpeg",
       "crop": { "left": 0, "top": 0.0625, "width": 1, "height": 0.9375 },
       "widths": [560, 1080],
       "formats": ["avif", "webp"]
     },
     "histoire-wide": {
-      "source": "20260929_143336_5670.jpeg",
-      "crop": { "left": 0, "top": 0.2, "width": 1, "height": 0.421875 },
+      "source": "20260929_143457_1130.jpeg",
+      "crop": { "left": 0, "top": 0.29, "width": 1, "height": 0.421875 },
       "widths": [640, 1280, 1680],
       "formats": ["avif", "webp"]
     },
     "famille": {
-      "source": "20260929_143823_1340.jpeg",
-      "crop": { "left": 0, "top": 0.48, "width": 1, "height": 0.3214 },
+      "source": "20260929_143207_9820.jpeg",
+      "crop": { "left": 0, "top": 0.05, "width": 1, "height": 0.3214 },
       "widths": [1280, 1920, 2560],
       "formats": ["avif", "webp"]
     },
     "famille-portrait": {
-      "source": "20260929_143823_1340.jpeg",
+      "source": "20260929_143207_9820.jpeg",
       "crop": { "left": 0, "top": 0.0625, "width": 1, "height": 0.9375 },
       "widths": [640, 960],
       "formats": ["avif", "webp"]
     },
-    "trouver-facade": {
-      "source": "20260929_144430_9850.jpeg",
-      "crop": { "left": 0, "top": 0.16, "width": 1, "height": 0.5625 },
-      "widths": [400, 800],
+    "galerie-facade": {
+      "source": "20260929_144512_4620.jpeg",
+      "widths": [400, 800, 1280],
       "formats": ["avif", "webp"]
     },
-    "trouver-terrasse": {
-      "source": "20260929_143626_0140.jpeg",
-      "crop": { "left": 0, "top": 0.36, "width": 1, "height": 0.5625 },
-      "widths": [400, 800],
+    "galerie-terrasse": {
+      "source": "20260929_143851_1880.jpeg",
+      "widths": [400, 800, 1280],
+      "formats": ["avif", "webp"]
+    },
+    "galerie-salle": {
+      "source": "20260929_142357_2270.jpeg",
+      "widths": [400, 800, 1280],
+      "formats": ["avif", "webp"]
+    },
+    "galerie-table": {
+      "source": "20260929_143226_5840.jpeg",
+      "widths": [400, 800, 1280],
+      "formats": ["avif", "webp"]
+    },
+    "galerie-bar": {
+      "source": "20260929_144038_6490.jpeg",
+      "widths": [400, 800, 1280],
+      "formats": ["avif", "webp"]
+    },
+    "galerie-treille": {
+      "source": "20260929_143938_8890.jpeg",
+      "widths": [400, 800, 1280],
+      "formats": ["avif", "webp"]
+    },
+    "galerie-livre": {
+      "source": "20260929_143442_9110.jpeg",
+      "widths": [400, 800, 1280],
       "formats": ["avif", "webp"]
     },
     "logo": {

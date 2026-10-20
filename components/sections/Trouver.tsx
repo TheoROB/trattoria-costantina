@@ -1,9 +1,26 @@
 import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
-import { Picture } from '@/components/Picture'
 import { openingHours, practicalInfo, site } from '@/lib/site'
+import { type GalleryPhoto, TrouverGallery } from './TrouverGallery'
 
-// Mirrors .trouver-grid / .trouver-photos: 2 columns of a 2-column grid inside the 1200px container.
-const photoSizes = '(max-width: 640px) calc(100vw - 64px), (max-width: 900px) calc(50vw - 38px), (max-width: 1200px) calc(25vw - 34px), 266px'
+const photos: GalleryPhoto[] = [
+  {
+    image: 'galerie-facade',
+    alt: 'Façade de la Trattoria Costantina et son enseigne, 3 rue Denis Papin à Hénin-Beaumont',
+    large: true,
+    className: 'thumb-facade',
+  },
+  {
+    image: 'galerie-terrasse',
+    alt: 'Table pour deux sur la terrasse en bois, sous une treille de vigne, devant un mur jaune',
+    large: true,
+    className: 'thumb-terrasse',
+  },
+  { image: 'galerie-salle', alt: "Salle du restaurant : tables aux nappes vichy rouges, suspensions dorées et mur terracotta orné d'assiettes décoratives" },
+  { image: 'galerie-table', alt: "Table pour deux dressée d'une nappe vichy rouge, avec corbeille de pain et huile d'olive, sur un sol en carreaux de ciment" },
+  { image: 'galerie-bar', alt: 'Étagères du bar garnies de bouteilles et de verres' },
+  { image: 'galerie-treille', alt: "Grappes de raisin de la treille au-dessus d'une table en bois et de jardinières de géraniums" },
+  { image: 'galerie-livre', alt: 'Livre ouvert sur une voiture de sport rouge, devant des affiches italiennes encadrées' },
+]
 
 // "12:00" -> "12h", "13:30" -> "13h30"
 function formatTime(time: string) {
@@ -45,18 +62,7 @@ export function Trouver() {
                 </div>
               </li>
             </ul>
-            <div className="trouver-photos">
-              <Picture
-                image="trouver-facade"
-                alt="Façade de la Trattoria Costantina, 3 rue Denis Papin à Hénin-Beaumont"
-                sizes={photoSizes}
-              />
-              <Picture
-                image="trouver-terrasse"
-                alt="Terrasse ensoleillée avec oliviers en pot et bancs en bois"
-                sizes={photoSizes}
-              />
-            </div>
+            <TrouverGallery photos={photos} />
           </div>
 
           <div className="horaires-card">

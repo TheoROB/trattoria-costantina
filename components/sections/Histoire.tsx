@@ -8,7 +8,7 @@ export function Histoire() {
           <div className="histoire-image">
             <Picture
               image="histoire"
-              alt="Table dressée d'une nappe vichy rouge devant le mur de photos de famille en noir et blanc"
+              alt="Dans la salle, un homme en tee-shirt blanc et tablier feuillette un livre illustré d'une voiture de sport rouge, devant des affiches de pâtes encadrées"
               sizes="(max-width: 1200px) calc(50vw - 72px), 528px"
               artDirection={[{ image: 'histoire-wide', media: '(max-width: 900px)', sizes: 'calc(100vw - 4rem)' }]}
             />

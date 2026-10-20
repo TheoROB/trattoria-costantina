@@ -100,6 +100,13 @@ for (const width of [375, 1280]) {
   })
 }
 
+test('photo variants are cached by browsers for a day', async ({ request }) => {
+  const res = await request.get('/images/hero/1280.avif')
+  expect(res.status()).toBe(200)
+  expect(res.headers()['content-type']).toBe('image/avif')
+  expect(res.headers()['cache-control']).toBe('public, max-age=86400, stale-while-revalidate=604800')
+})
+
 test('mentions légales page responds, shows the SIRET and is not indexed', async ({ page }) => {
   const res = await page.goto('/mentions-legales')
   expect(res?.status()).toBe(200)
@@ -133,7 +140,38 @@ for (const path of ['/', '/mentions-legales']) {
 test('<picture> wrappers keep the mockup layout (Nous trouver photos side by side)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/')
-  const boxes = await page.locator('.trouver-photos img').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top))
-  expect(boxes).toHaveLength(2)
-  expect(boxes[0]).toBe(boxes[1])
+  const tops = await page.locator('.trouver-photos img').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top))
+  expect(tops).toHaveLength(7)
+  // Façade and terrasse share the first row, the five other photos the second one.
+  expect(tops[0]).toBe(tops[1])
+  expect(new Set(tops.slice(2)).size).toBe(1)
+  expect(tops[2]).toBeGreaterThan(tops[0])
+})
+
+test('a Nous trouver photo opens in a lightbox that can be browsed and closed', async ({ page }) => {
+  await page.goto('/')
+  const dialog = page.locator('.gallery-dialog')
+  await expect(dialog).toBeHidden()
+
+  await page.locator('.trouver-photos button').nth(2).click()
+  await expect(dialog).toBeVisible()
+  const photo = dialog.locator('img')
+  await expect(photo).toHaveAttribute('alt', /Salle du restaurant/)
+  await expect(dialog).toContainText('3 / 7')
+  // The lightbox offers sources large enough for a sharp full-screen view.
+  await expect(dialog.locator('source[type="image/avif"]')).toHaveAttribute('srcset', /galerie-salle\/1280\.avif/)
+
+  await page.keyboard.press('ArrowRight')
+  await expect(dialog).toContainText('4 / 7')
+  // Going back past the first photo wraps around to the last one.
+  for (let i = 0; i < 4; i++) await dialog.getByRole('button', { name: 'Photo précédente' }).click()
+  await expect(dialog).toContainText('7 / 7')
+
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(page.locator('.trouver-photos button').nth(2)).toBeFocused()
+
+  await page.locator('.trouver-photos button').first().click()
+  await dialog.getByRole('button', { name: 'Fermer' }).click()
+  await expect(dialog).toBeHidden()
 })
