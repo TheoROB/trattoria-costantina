@@ -1,0 +1,170 @@
+[
+  {
+    "id": null,
+    "name": "Marinara",
+    "currentPrice": 900,
+    "description": "Sauce tomate, ail confit, basilic, huile d'olive et pecorino",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Margherita",
+    "currentPrice": 1000,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, huile d'olive",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Regina Classica",
+    "currentPrice": 1300,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, jambon rôti aux herbes, champignons bruns",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Regina Speciale",
+    "currentPrice": 1500,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, jambon rôti aux herbes, carpaccio de champignons après cuisson, roquette, copeaux de Grana et crème de vinaigre balsamique",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Diavola",
+    "currentPrice": 1500,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, spianata picante, olive Leccino",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Diavola Sbagliata",
+    "currentPrice": 1800,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, spianata picante, oignons rouges, stracciatella",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Quattro Formaggi",
+    "currentPrice": 1400,
+    "description": "Sauce tomate, mozzarella fior di latte, grana, gorgonzola, pecorino et poivre noir",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Napoletana",
+    "currentPrice": 1300,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, filets d'anchois à l'huile d'olive, câpres",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Calzone",
+    "currentPrice": 1500,
+    "description": "Sauce tomate, mozzarella fior di latte, jambon rôti aux herbes, basilic, champignons bruns, oeuf, grana",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Costantina",
+    "currentPrice": 1800,
+    "description": "Base blanche, mozzarella fior di latte, grana, mortadelle de Bologne, stracciatella, éclats de pistache torréfiées, huile d'olive",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Tartufata",
+    "currentPrice": 2100,
+    "description": "Base blanche, mozzarella fior di latte, jambon rôti aux herbes, champignons bruns, huile de truffe, copeaux de grana, fines tranches de Truffe fraîche",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Al Tonno",
+    "currentPrice": 1600,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, thon à l'huile d'olive, oignons rouges, olives Leccino",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Quattro Stagioni",
+    "currentPrice": 1600,
+    "description": "Sauce tomate, mozzarella fior di latte, basilic, jambon rôti aux herbes, champignons bruns, oignons rouges, artichauts grillés, copeaux de grana, huile d'olive",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Tiramisù al Caffè",
+    "currentPrice": 800,
+    "description": "Le grand classique des desserts italiens, avec un peu d'amaretto et saupoudré de poudre de cacao.",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Panna Cotta Frutti di Bosco",
+    "currentPrice": 800,
+    "description": "Pannacotta légère à la vanille, coulis de fruits rouges et pistaches torréfiées.",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Affogato alla Nocciola",
+    "currentPrice": 600,
+    "description": "Glace vanille, Nocciolata et éclats de noisettes torréfiées sur lesquels on verse un véritable expresso.",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Dame Blanche \"Bella Bianca\"",
+    "currentPrice": 700,
+    "description": "Glace vanille, sauce chocolat maison, chantilly et noisettes torréfiées",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Café ou Thé Gourmand",
+    "currentPrice": 900,
+    "description": "un petit Tiramisù, une petite Pannacotta à la vanille, une boule de glace, un café ou un thé.",
+    "source": "RestaurantGuru, photo de la carte mise en ligne ~juin 2026 (menu02.restaurantguru.com/m7/menu-Trattoria-Costantina-Restaurant-5zo.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Aperol Spritz",
+    "currentPrice": 850,
+    "description": "Aperol, Prosecco, eau gazeuse, tranche d'orange",
+    "source": "RestaurantGuru, carte Spritz ~avril 2026 (m7/Trattoria-Costantina-Restaurant-menu-7ho.jpg), même texte que la version ~décembre 2025 (m7/menu-Trattoria-Costantina-ytm.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Sarti Spritz",
+    "currentPrice": 900,
+    "description": "Sarti Rosa, Prosecco, eau gazeuse, citron vert",
+    "source": "RestaurantGuru, carte Spritz ~avril 2026 (m7/Trattoria-Costantina-Restaurant-menu-7ho.jpg), même texte que la version ~décembre 2025 (m7/menu-Trattoria-Costantina-ytm.jpg)",
+    "confidence": "high"
+  },
+  {
+    "id": null,
+    "name": "Limoncello Spritz",
+    "currentPrice": 900,
+    "description": "Ramo d'Oro Limoncello, Prosecco, eau gazeuse",
+    "source": "RestaurantGuru, carte Spritz ~avril 2026 (m7/Trattoria-Costantina-Restaurant-menu-7ho.jpg), même texte que la version ~décembre 2025 (m7/menu-Trattoria-Costantina-ytm.jpg)",
+    "confidence": "high"
+  }
+]
