@@ -270,5 +270,21 @@
         "height": 339
       }
     ]
+  },
+  "ch-concept": {
+    "formats": [
+      "webp",
+      "png"
+    ],
+    "variants": [
+      {
+        "width": 160,
+        "height": 95
+      },
+      {
+        "width": 320,
+        "height": 190
+      }
+    ]
   }
 }

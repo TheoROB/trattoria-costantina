@@ -76,6 +76,11 @@
       "source": "repo:assets/logo.png",
       "widths": [160, 320, 480],
       "formats": ["webp", "png"]
+    },
+    "ch-concept": {
+      "source": "repo:assets/ch-concept.png",
+      "widths": [160, 320],
+      "formats": ["webp", "png"]
     }
   }
 }

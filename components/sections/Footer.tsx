@@ -51,6 +51,24 @@ export function Footer() {
         <p>© {new Date().getFullYear()} {site.name}. Tous droits réservés.</p>
         <p>Fait avec amour — <em>Come Nonna</em></p>
       </div>
+      <div className="footer-credit container">
+        <a
+          href="https://chconcept.fr"
+          target="_blank"
+          rel="noopener"
+          className="footer-credit-card"
+          aria-label="Site web réalisé par CH Concept, agence de communication 360 (nouvel onglet)"
+        >
+          <span className="footer-credit-label">Site web réalisé par</span>
+          <span className="footer-credit-body">
+            <Picture image="ch-concept" alt="CH Concept" sizes="68px" className="footer-credit-logo" />
+            <span className="footer-credit-text">
+              <strong>CH Concept®</strong>
+              <span>Agence de communication 360</span>
+            </span>
+          </span>
+        </a>
+      </div>
     </footer>
   )
 }

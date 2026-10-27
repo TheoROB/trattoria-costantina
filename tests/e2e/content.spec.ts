@@ -175,3 +175,14 @@ test('a Nous trouver photo opens in a lightbox that can be browsed and closed', 
   await dialog.getByRole('button', { name: 'Fermer' }).click()
   await expect(dialog).toBeHidden()
 })
+
+test('the footer credits CH Concept with a link to chconcept.fr', async ({ page }) => {
+  await page.goto('/')
+  const credit = page.locator('footer').getByRole('link', { name: /Site web réalisé par CH Concept/ })
+  await expect(credit).toHaveAttribute('href', 'https://chconcept.fr')
+  await expect(credit).toHaveAttribute('target', '_blank')
+  await expect(credit).toHaveAttribute('rel', 'noopener')
+  await expect(credit).toContainText('Agence de communication 360')
+  await credit.scrollIntoViewIfNeeded()
+  await expect(credit.getByRole('img', { name: 'CH Concept' })).toBeVisible()
+})

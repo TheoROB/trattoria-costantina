@@ -955,6 +955,62 @@ html:has(.gallery-dialog[open]) { overflow: hidden; }
 
 .footer-bottom em { font-family: var(--font-serif); }
 
+/* Credit to the agency that built the site, at the very bottom. */
+.footer-credit {
+  display: flex;
+  justify-content: center;
+  padding-top: 2rem;
+  padding-bottom: 2.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.footer-credit-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.25rem 2.5rem 1.4rem;
+  border: 1px solid rgba(250, 246, 240, 0.22);
+  border-radius: 18px;
+  color: rgba(250, 246, 240, 0.5);
+  transition: border-color 0.2s, color 0.2s;
+}
+.footer-credit-card:hover { border-color: rgba(250, 246, 240, 0.45); color: rgba(250, 246, 240, 0.7); }
+.footer-credit-card:focus-visible { outline: 2px solid var(--terracotta); outline-offset: 3px; }
+
+.footer-credit-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.footer-credit-body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-credit-logo {
+  display: block;
+  width: 68px;
+  height: auto;
+  /* The source logo is yellow: shown in the light tone of the footer. */
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+.footer-credit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(250, 246, 240, 0.22);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+.footer-credit-text strong { font-weight: 600; font-size: 1rem; color: var(--cream); }
+
 /* ===========================
    RESPONSIVE
    =========================== */
@@ -1005,6 +1061,7 @@ html:has(.gallery-dialog[open]) { overflow: hidden; }
   .famille-actions { flex-direction: column; align-items: center; }
 
   .footer-main { grid-template-columns: 1fr; }
+  .footer-credit-card { padding: 1.1rem 1.4rem 1.25rem; }
 
   .trouver-photos { gap: 0.5rem; }
   .trouver-photos li.is-large { grid-column: span 10; }
