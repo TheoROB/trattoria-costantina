@@ -27,6 +27,7 @@ export function FamilleImage({ children }: { children: ReactNode }) {
     <div className="famille-bg" ref={container}>
       {ready && children}
       <noscript>{children}</noscript>
+      <div className="famille-overlay"></div>
     </div>
   )
 }

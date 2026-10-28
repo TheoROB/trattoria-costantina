@@ -13,7 +13,6 @@ export function Famille() {
           sizes="100vw"
           artDirection={[{ image: 'famille-portrait', media: '(max-width: 640px)', sizes: 'max(100vw, 384px)' }]}
         />
-        <div className="famille-overlay"></div>
       </FamilleImage>
       <div className="famille-content">
         <div className="divider-diamond">✦</div>

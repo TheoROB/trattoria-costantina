@@ -32,6 +32,11 @@ export function Picture({ image, alt, sizes, className, priority = false, loadin
   const { formats, variants } = manifest[image]
   const fallback = formats[formats.length - 1]
   const { width, height } = largest(image)
+  // Gallery src must still serve lightboxes when picture/srcset is unsupported.
+  // New thumbnail widths must not shift the previous 800px plain-src fallback.
+  const fallbackVariant = image.startsWith('galerie-')
+    ? (variants.find((variant) => variant.width >= 800) ?? variants[variants.length - 1])
+    : variants[Math.min(1, variants.length - 1)]
 
   return (
     <picture>
@@ -52,7 +57,7 @@ export function Picture({ image, alt, sizes, className, priority = false, loadin
         <source key={format} type={MIME[format]} srcSet={srcSet(image, format)} sizes={sizes} />
       ))}
       <img
-        src={`/images/${image}/${variants[Math.min(1, variants.length - 1)].width}.${fallback}`}
+        src={`/images/${image}/${fallbackVariant.width}.${fallback}`}
         srcSet={srcSet(image, fallback)}
         sizes={sizes}
         width={width}
