@@ -1,19 +1,19 @@
 import { CalendarIcon } from '@/components/icons'
 import { Picture } from '@/components/Picture'
 import { site } from '@/lib/site'
+import { FamilleImage } from './FamilleImage'
 
 export function Famille() {
   return (
     <section className="section-famille">
-      <div className="famille-bg">
+      <FamilleImage>
         <Picture
           image="famille"
           alt="Salle du restaurant : mur de photos de famille en noir et blanc et suspensions dorées"
           sizes="100vw"
           artDirection={[{ image: 'famille-portrait', media: '(max-width: 640px)', sizes: 'max(100vw, 384px)' }]}
         />
-        <div className="famille-overlay"></div>
-      </div>
+      </FamilleImage>
       <div className="famille-content">
         <div className="divider-diamond">✦</div>
         <h2>Venez comme en famille</h2>
