@@ -29,32 +29,32 @@ npm run start -- -H 127.0.0.1 -p 3187
 npx --no-install playwright test --config playwright.images.config.ts
 ```
 
-The image-specific config has no webServer, env loading or global setup. It uses Chromium for both desktop 1440×900 DPR1 and emulated iPhone 12 390×844 DPR3. The tests use fresh contexts, verify actual request/source selection, initial Famille deferral and loading on scroll, reserved geometry, both fallbacks, hero SSR/eager/high, unchanged large thumbnail selection, lightbox loading on demand, and byte invariance of all pre-existing image files and Hero.tsx relative to the base. No DB is needed; the menu's unavailable state is expected. Physical Safari and production database-backed menu photos are outside this audit.
+The image-specific config has no webServer, env loading or global setup. It uses Chromium for both desktop 1440×900 DPR1 and emulated iPhone 12 390×844 DPR3. The tests use fresh contexts, verify actual request/source selection, initial Famille deferral and loading on scroll, reserved geometry, both fallbacks, hero SSR/eager/high, unchanged large thumbnail selection, and lightbox loading on demand without requiring Git history. Optional audit invariance is separate: `node scripts/check-image-invariance.mjs f8d9ea1` compares all pre-existing image files and Hero.tsx when that base object is available. Browser tests work in shallow checkouts and source archives. Test artifacts use `join(tmpdir(), 'trattoria-image-tests')`, respecting `TMPDIR`. No DB is needed; the menu's unavailable state is expected. Physical Safari and production database-backed menu photos are outside this audit.
 
 For an environment-free build, archive/copy the checkout into a temporary directory excluding `.env*`, `.git`, `.next` and `node_modules`, then install the existing lockfile there. Do not use a node_modules symlink outside the build root: Turbopack rejects it. No production configuration or secrets are required.
 
 ## Repeating the browser measurement
 
-The original reusable script is outside git:
+The portable script is checked in at [scripts/measure-home-images.mjs](../scripts/measure-home-images.mjs). It uses dependencies from `--source` (defaults to this checkout), requires a **new** output directory via `--out`, and accepts `--baseURL`. It does not read env files. The output directory's parent must exist; the script creates the final directory and refuses to overwrite an existing baseline.
 
-`/home/nora/jeff-workspace/reports/2026-10-28-trattoria-images/before/measure.cjs`
-
-With the env-free production build running on port 3187, create a new output directory and run:
+With the env-free production build running on port 3187:
 
 ```sh
-AUDIT_SOURCE=/absolute/path/to/built/checkout \
-AUDIT_ORIGIN=http://127.0.0.1:3187 \
-AUDIT_OUT=/absolute/path/to/new-output-directory \
-node /home/nora/jeff-workspace/reports/2026-10-28-trattoria-images/before/measure.cjs
+node scripts/measure-home-images.mjs \
+  --source /absolute/path/to/built/checkout \
+  --out /absolute/path/to/new-output-directory \
+  --baseURL http://127.0.0.1:3187
 ```
 
-The same script is used unchanged before/after. Each device gets a fresh browser context with normal, initially empty HTTP cache. Network and CPU are unthrottled on localhost. It waits for networkidle plus 1500ms before the initial snapshot; scrolls progressively by 70% viewport every 350ms; waits 1500ms; takes a full-page screenshot; then opens all seven lightboxes separately with cache retained. JSON records actual URLs, CDP transfer bytes (including response overhead), response-body bytes, decoded file dimensions, rendered boxes, sizes, priorities, loading, cache headers and computed CSS images. Screenshots and full baselines belong outside git. The live reservation iframe performs read-only availability requests; no form or booking is submitted.
+For temporary artifacts, choose a new directory under your configured `TMPDIR`, or use an ignored repo-relative directory (for example `test-results/image-audit`). `--source` points to the checkout containing the existing lockfile-installed Playwright and Sharp; it need not contain Git history. The app under test runs separately at `--baseURL`.
+
+Historical before/after evidence used the original external `before/measure.cjs`. The checked-in version changes only argument/dependency/output setup; the measurement loop and JSON schema are unchanged, and historical results have not been replaced. Each device gets a fresh browser context with normal, initially empty HTTP cache. Network and CPU are unthrottled on localhost. It waits for networkidle plus 1500ms before the initial snapshot; scrolls progressively by 70% viewport every 350ms; waits 1500ms; takes a full-page screenshot; then opens all seven lightboxes separately with cache retained. JSON records actual URLs, CDP transfer bytes (including response overhead), response-body bytes, decoded file dimensions, rendered boxes, sizes, priorities, loading, cache headers and computed CSS images. Screenshots and full baselines belong outside git. The live reservation iframe performs read-only availability requests; no form or booking is submitted.
 
 Evidence directory: `/home/nora/jeff-workspace/reports/2026-10-28-trattoria-images/`, with `before/` and `after/` JSON, initial/full-page screenshots and command logs. No CSS/background network images or hidden duplicate/lightbox images were found in phase 1, including the supplemental iframe scan.
 
 ## Before/after evidence
 
-Actual image transfer bytes, including HTTP response overhead; same unchanged measurement script and cold-cache conditions described above. Full page is cumulative; scroll and lightboxes are additional.
+Actual image transfer bytes, including HTTP response overhead; the original unchanged measurement script and cold-cache conditions described above. Full page is cumulative; scroll and lightboxes are additional.
 
 | Device | Initial before → after | Scroll additional before → after | Full page before → after | Seven lightboxes additional before → after |
 |---|---:|---:|---:|---:|
@@ -78,3 +78,10 @@ The captures below are real after screenshots converted with the existing Sharp 
 | ![Desktop gallery after](image-performance-evidence/desktop-gallery-after.webp) | ![Mobile gallery after](image-performance-evidence/mobile-gallery-after.webp) |
 
 Validation: lint and typecheck passed; 229 unit tests across 16 files passed; env-free production build passed; 8 focused Playwright cases passed. Small-only generation reproduced all 20 new files plus manifest byte-identically. Public test config has no DB setup/mutation. No env, auth, DB, CI, production config, package/lockfile or existing hero/image asset changes. Browser binary and build tooling troubleshooting outputs stay in the external evidence directory. No PR published; stop for independent Claude review.
+
+
+Pre-review portability follow-up: the ordinary focused suite now has six browser cases, with the former twice-run Git-history assertion moved to the explicit standalone invariance command. The original implementation validation above (eight cases including those two invariance runs) remains the historical result.
+
+Portability validation: lint and typecheck passed; all six browser cases passed both in the working checkout and from an env-free source archive with no `.git` directory. A custom `TMPDIR` placed Playwright's `.last-run.json` under `<TMPDIR>/trattoria-image-tests/`. The explicit invariance command passed for all 87 existing files. A separate portable measurement validation is saved under external `after/portable-validation/`; accepted `before/` and `after/` baselines were not overwritten.
+
+The portable validation reproduced the accepted after run exactly for both devices: image URLs, phases, transfer/body bytes and file dimensions all matched (`after/portable-comparison.json`), with no page JavaScript errors. The measurement loop itself was checked byte-for-byte against the historical script.

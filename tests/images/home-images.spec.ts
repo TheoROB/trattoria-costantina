@@ -1,17 +1,6 @@
 import { expect, test } from '@playwright/test'
-import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
 
 const small = ['salle', 'table', 'bar', 'treille', 'livre']
-
-test('hero and every existing image asset remain byte-identical to the audit base', () => {
-  const files = execFileSync('git', ['ls-tree', '-r', '--name-only', 'f8d9ea1', '--',
-    'public/images', 'assets/hero-table-dressee.jpg', 'components/sections/Hero.tsx'], { encoding: 'utf8' })
-    .trim().split('\n').filter((file) => file !== 'public/images/manifest.json')
-  for (const file of files) {
-    expect(readFileSync(file).equals(execFileSync('git', ['show', `f8d9ea1:${file}`], { maxBuffer: 10 * 1024 * 1024 })), file).toBe(true)
-  }
-})
 
 test('cold network selects small thumbnails, defers famille and keeps lightbox on demand', async ({ page }, testInfo) => {
   const mobile = testInfo.project.name === 'mobile'

@@ -1,10 +1,12 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
 // Deliberately independent of the DB-backed e2e config and global setup.
 // Start an env-free production build separately; no DB or mutation fixtures.
 export default defineConfig({
   testDir: './tests/images',
-  outputDir: '/tmp/trattoria-image-tests',
+  outputDir: join(tmpdir(), 'trattoria-image-tests'),
   reporter: 'list',
   use: { baseURL: 'http://127.0.0.1:3187' },
   projects: [
