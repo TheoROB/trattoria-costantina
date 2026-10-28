@@ -158,6 +158,14 @@
     ],
     "variants": [
       {
+        "width": 160,
+        "height": 213
+      },
+      {
+        "width": 240,
+        "height": 320
+      },
+      {
         "width": 400,
         "height": 533
       },
@@ -177,6 +185,14 @@
       "webp"
     ],
     "variants": [
+      {
+        "width": 160,
+        "height": 213
+      },
+      {
+        "width": 240,
+        "height": 320
+      },
       {
         "width": 400,
         "height": 533
@@ -198,6 +214,14 @@
     ],
     "variants": [
       {
+        "width": 160,
+        "height": 213
+      },
+      {
+        "width": 240,
+        "height": 320
+      },
+      {
         "width": 400,
         "height": 533
       },
@@ -218,6 +242,14 @@
     ],
     "variants": [
       {
+        "width": 160,
+        "height": 213
+      },
+      {
+        "width": 240,
+        "height": 320
+      },
+      {
         "width": 400,
         "height": 533
       },
@@ -237,6 +269,14 @@
       "webp"
     ],
     "variants": [
+      {
+        "width": 160,
+        "height": 213
+      },
+      {
+        "width": 240,
+        "height": 320
+      },
       {
         "width": 400,
         "height": 533

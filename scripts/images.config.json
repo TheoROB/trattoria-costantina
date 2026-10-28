@@ -50,26 +50,36 @@
     "galerie-salle": {
       "source": "20260929_142357_2270.jpeg",
       "widths": [400, 800, 1280],
+      "smallWidths": [160, 240],
+      "smallSource": "repo:public/images/galerie-salle/1280.webp",
       "formats": ["avif", "webp"]
     },
     "galerie-table": {
       "source": "20260929_143226_5840.jpeg",
       "widths": [400, 800, 1280],
+      "smallWidths": [160, 240],
+      "smallSource": "repo:public/images/galerie-table/1280.webp",
       "formats": ["avif", "webp"]
     },
     "galerie-bar": {
       "source": "20260929_144038_6490.jpeg",
       "widths": [400, 800, 1280],
+      "smallWidths": [160, 240],
+      "smallSource": "repo:public/images/galerie-bar/1280.webp",
       "formats": ["avif", "webp"]
     },
     "galerie-treille": {
       "source": "20260929_143938_8890.jpeg",
       "widths": [400, 800, 1280],
+      "smallWidths": [160, 240],
+      "smallSource": "repo:public/images/galerie-treille/1280.webp",
       "formats": ["avif", "webp"]
     },
     "galerie-livre": {
       "source": "20260929_143442_9110.jpeg",
       "widths": [400, 800, 1280],
+      "smallWidths": [160, 240],
+      "smallSource": "repo:public/images/galerie-livre/1280.webp",
       "formats": ["avif", "webp"]
     },
     "logo": {

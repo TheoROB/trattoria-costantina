@@ -17,7 +17,7 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
   // On the home page the reservation section already shows the widget: no duplicate button over it.
   useEffect(() => {
     const section = document.getElementById('reservation')
-    if (!section) return
+    if (!section || !('IntersectionObserver' in window)) return
     const observer = new IntersectionObserver(([entry]) => setSectionInView(entry.isIntersecting))
     observer.observe(section)
     return () => observer.disconnect()

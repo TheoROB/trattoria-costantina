@@ -23,7 +23,7 @@ const ENCODERS = {
   png: (img) => img.png({ compressionLevel: 9, palette: true, effort: 10 }),
 }
 
-const { values } = parseArgs({ options: { source: { type: 'string' } } })
+const { values } = parseArgs({ options: { source: { type: 'string' }, 'small-only': { type: 'boolean', default: false } } })
 const sourceDir = values.source ?? process.env.PHOTOS_DIR
 const config = JSON.parse(await readFile(path.join(root, 'scripts/images.config.json'), 'utf8'))
 
@@ -57,15 +57,23 @@ async function load(entry) {
   }
 }
 
-const manifest = {}
+// --small-only derives only new thumbnail sizes from the checked-in largest WebP.
+// Existing originals/variants are never rewritten in this mode.
+const manifest = values['small-only']
+  ? JSON.parse(await readFile(path.join(outDir, 'manifest.json'), 'utf8'))
+  : {}
 for (const [key, entry] of Object.entries(config.images)) {
-  const base = await load(entry)
+  if (values['small-only'] && !entry.smallWidths) continue
+  const base = await load(values['small-only'] ? { source: entry.smallSource } : entry)
   const dir = path.join(outDir, key)
-  await rm(dir, { recursive: true, force: true })
+  if (!values['small-only']) await rm(dir, { recursive: true, force: true })
   await mkdir(dir, { recursive: true })
 
-  const variants = []
-  for (const width of entry.widths) {
+  const widths = values['small-only'] ? entry.smallWidths : [...(entry.smallWidths ?? []), ...entry.widths]
+  const variants = values['small-only']
+    ? manifest[key].variants.filter((v) => !entry.smallWidths.includes(v.width))
+    : []
+  for (const width of widths) {
     if (width > base.width) throw new Error(`${key}: ${width}px exceeds the source width (${base.width}px)`)
     const height = Math.round((base.height * width) / base.width)
     for (const format of entry.formats) {
@@ -74,6 +82,7 @@ for (const [key, entry] of Object.entries(config.images)) {
     }
     variants.push({ width, height })
   }
+  variants.sort((a, b) => a.width - b.width)
   manifest[key] = { formats: entry.formats, variants }
   console.log(`${key}: ${variants.map((v) => `${v.width}x${v.height}`).join(', ')}`)
 }
