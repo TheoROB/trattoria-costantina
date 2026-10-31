@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CalendarIcon } from '@/components/icons'
 import { DishWidget } from '@/components/sections/DishWidget'
+import { reportReservationRequest } from '@/lib/reservation-requests/beacon'
 import './reservation-cta.css'
 
 // Floating "Réserver" button on every public page, opening the DISH widget in a native modal <dialog>
@@ -23,9 +24,14 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
     return () => observer.disconnect()
   }, [])
 
+  // Every opening of the dialog counts as one "demande de réservation" (anonymous, see app/api/reservation-requests).
+  // Counted here, in the click handler, never in an effect: re-renders cannot repeat it.
   const open = () => {
+    const dialog = dialogRef.current
+    if (!dialog || dialog.open) return
     setLoaded(true)
-    dialogRef.current?.showModal()
+    dialog.showModal()
+    if (dialog.open) reportReservationRequest()
   }
 
   return (

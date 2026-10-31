@@ -10,6 +10,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         <Link href="/admin" className="admin-brand">
           Trattoria Costantina <span>Administration</span>
         </Link>
+        <nav className="admin-header-nav" aria-label="Administration">
+          <Link href="/admin">La carte</Link>
+          <Link href="/admin/demandes-de-reservation">Demandes de réservation</Link>
+        </nav>
         <div className="admin-header-actions">
           <span className="admin-user">{admin.email}</span>
           <form action={logout}>
