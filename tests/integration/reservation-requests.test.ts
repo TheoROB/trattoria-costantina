@@ -176,6 +176,14 @@ describe('loadMonthReport', () => {
     expect((await store.loadMonthReport(pool, "2026-10' OR 1=1", now)).report.month).toBe('2026-11')
   })
 
+  it('summarises this week, last week and this month for the admin home page', async () => {
+    await seed('2026-10-20T08:00:00Z', ['2026-10-21T10:00:00Z', '2026-10-26T10:00:00Z', '2026-11-01T22:59:00Z', '2026-11-02T10:00:00Z'])
+    const { summary } = await store.loadSummary(pool, new Date('2026-11-01T12:00:00Z'))
+    expect(summary.lastWeek).toMatchObject({ start: '2026-10-19', count: 1, partial: true })
+    expect(summary.thisWeek).toMatchObject({ start: '2026-10-26', end: '2026-11-01', count: 2, partial: true })
+    expect(summary.thisMonth).toMatchObject({ month: '2026-11', count: 1 })
+  })
+
   it('activates counting on the first look at the report, with nothing before', async () => {
     const { report, activatedAt } = await store.loadMonthReport(pool, undefined)
     expect(Math.abs(activatedAt.getTime() - Date.now())).toBeLessThan(5000)

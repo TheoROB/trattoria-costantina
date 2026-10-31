@@ -1,26 +1,15 @@
 import Link from 'next/link'
+import { PeriodValue as Value, REPORT_HREF } from '@/components/admin/ReservationRequestsSummary'
 import { dbErrorCode, requireAdmin } from '@/lib/auth/dal'
 import { getPool } from '@/lib/db'
 import { HOURLY_QUOTA, loadMonthReport } from '@/lib/reservation-requests/store'
 import { formatDay, formatMonth, formatParisTime } from '@/lib/reservation-requests/paris-time'
-import type { Period } from '@/lib/reservation-requests/report'
 
 export const metadata = { title: 'Demandes de réservation' }
 
 type PageProps = { searchParams: Promise<{ mois?: string | string[] }> }
 
-const href = (month: string) => `/admin/demandes-de-reservation?mois=${month}`
-
-function Value({ period }: { period: Period }) {
-  if (period.status === 'unavailable') return <span className="admin-stat-muted">indisponible</span>
-  if (period.status === 'future') return <span className="admin-stat-muted">—</span>
-  return (
-    <>
-      {period.count}
-      {period.partial && <span className="admin-stat-muted"> (partiel)</span>}
-    </>
-  )
-}
+const href = (month: string) => `${REPORT_HREF}?mois=${month}`
 
 export default async function ReservationRequestsPage({ searchParams }: PageProps) {
   await requireAdmin()

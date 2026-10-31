@@ -201,3 +201,9 @@ html:has(.admin-drawer[open]) { overflow: hidden; }
 .admin-stat-table th[scope="row"] { font-weight: 400; text-transform: capitalize; }
 .admin-stat-table td { text-align: right; font-variant-numeric: tabular-nums; }
 .admin-stat-muted { color: var(--brown-light); font-size: 0.85em; }
+.admin-stat-summary { margin-bottom: 1.5rem; }
+.admin .admin-stat-summary h2 { margin: 0 0 0.75rem; font-size: 1.1rem; }
+.admin-stat-summary-figures { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 0 0 0.75rem; }
+.admin-stat-summary-figures dt { font-size: 0.85rem; }
+.admin-stat-summary-figures dd { margin: 0.15rem 0 0; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.admin-stat-summary-note { font-size: 0.85rem; }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { buildMonthReport, countsByParisDay, MAX_REPORT_MONTHS, monthBounds, monthQueryRange, resolveMonth } from './report'
+import {
+  buildMonthReport, buildSummary, countsByParisDay, MAX_REPORT_MONTHS, monthBounds, monthQueryRange, resolveMonth, summaryQueryRange,
+} from './report'
 
 const at = (iso: string) => new Date(iso)
 
@@ -122,5 +124,31 @@ describe('buildMonthReport', () => {
     // Week of Monday 28 Dec to Sunday 3 Jan spans both years.
     expect(january.weeks[0]).toMatchObject({ start: '2026-12-28', end: '2027-01-03', count: 7, partial: false })
     expect(january.count).toBe(6)
+  })
+})
+
+describe('summary for the admin home page', () => {
+  // Sunday 1 Nov 2026, 10:00 Paris (CET): this week is Mon 26 Oct → Sun 1 Nov, last week Mon 19 → Sun 25 Oct.
+  const now = at('2026-11-01T09:00:00Z')
+  const counts = new Map([['2026-10-19', 1], ['2026-10-25', 2], ['2026-10-26', 3], ['2026-10-31', 4], ['2026-11-01', 5]])
+
+  it('queries from the earliest of last Monday and the 1st, to the latest of next Monday and next 1st', () => {
+    const { from, to } = summaryQueryRange(now)
+    expect(from.toISOString()).toBe('2026-10-18T22:00:00.000Z') // Mon 19 Oct 00:00 CEST
+    expect(to.toISOString()).toBe('2026-11-30T23:00:00.000Z') // Tue 1 Dec 00:00 CET
+  })
+
+  it('gives this week, last week (Monday-Sunday, across months) and this month, zero days included', () => {
+    const summary = buildSummary({ now, activatedAt: at('2026-10-01T00:00:00Z'), counts })
+    expect(summary.thisWeek).toMatchObject({ start: '2026-10-26', end: '2026-11-01', status: 'observed', count: 12, partial: true })
+    expect(summary.lastWeek).toMatchObject({ start: '2026-10-19', end: '2026-10-25', status: 'observed', count: 3, partial: false })
+    expect(summary.thisMonth).toMatchObject({ month: '2026-11', status: 'observed', count: 5, partial: true })
+  })
+
+  it('says unavailable, not zero, before activation', () => {
+    const summary = buildSummary({ now, activatedAt: at('2026-10-30T12:00:00Z'), counts: new Map() })
+    expect(summary.lastWeek).toMatchObject({ status: 'unavailable', count: null })
+    expect(summary.thisWeek).toMatchObject({ status: 'observed', count: 0, partial: true })
+    expect(buildSummary({ now, activatedAt: null, counts }).thisMonth).toMatchObject({ status: 'unavailable', count: null })
   })
 })

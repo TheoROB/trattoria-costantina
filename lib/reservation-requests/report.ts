@@ -79,15 +79,19 @@ function combine(days: DayReport[]): Period {
   }
 }
 
-export function buildMonthReport({
-  month, now, activatedAt, counts,
-}: { month: string; now: Date; activatedAt: Date | null; counts: Map<string, number> }): MonthReport {
+type ReportInput = { now: Date; activatedAt: Date | null; counts: Map<string, number> }
+
+function weekReport(start: string, day: (date: string) => DayReport): WeekReport {
+  const weekDays = Array.from({ length: 7 }, (_, i) => day(addDays(start, i)))
+  return { start, end: weekDays[6].date, ...combine(weekDays) }
+}
+
+export function buildMonthReport({ month, now, activatedAt, counts }: ReportInput & { month: string }): MonthReport {
   const day = (date: string) => dayReport(date, now, activatedAt, counts)
   const days = daysOfMonth(month).map(day)
   const weeks: WeekReport[] = []
   for (let start = mondayOf(days[0].date); monthOf(start) <= month; start = addDays(start, 7)) {
-    const weekDays = Array.from({ length: 7 }, (_, i) => day(addDays(start, i)))
-    weeks.push({ start, end: weekDays[6].date, ...combine(weekDays) })
+    weeks.push(weekReport(start, day))
   }
   const bounds = monthBounds(now, activatedAt)
   return {
@@ -97,5 +101,32 @@ export function buildMonthReport({
     ...combine(days),
     previous: month > bounds.earliest ? addMonths(month, -1) : null,
     next: month < bounds.latest ? addMonths(month, 1) : null,
+  }
+}
+
+export type Summary = { thisWeek: WeekReport; lastWeek: WeekReport; thisMonth: Period & { month: string } }
+
+/** UTC range [from, to) covering last week, this week and this month (Paris). */
+export function summaryQueryRange(now: Date) {
+  const today = parisDate(now)
+  const lastMonday = addDays(mondayOf(today), -7)
+  const monthStart = `${monthOf(today)}-01`
+  const nextMonday = addDays(mondayOf(today), 7)
+  const nextMonthStart = `${addMonths(monthOf(today), 1)}-01`
+  return {
+    from: parisMidnight(lastMonday < monthStart ? lastMonday : monthStart),
+    to: parisMidnight(nextMonday > nextMonthStart ? nextMonday : nextMonthStart),
+  }
+}
+
+/** This Monday-Sunday week, the previous one and the current month, in Paris time. */
+export function buildSummary({ now, activatedAt, counts }: ReportInput): Summary {
+  const day = (date: string) => dayReport(date, now, activatedAt, counts)
+  const today = parisDate(now)
+  const month = monthOf(today)
+  return {
+    thisWeek: weekReport(mondayOf(today), day),
+    lastWeek: weekReport(addDays(mondayOf(today), -7), day),
+    thisMonth: { month, ...combine(daysOfMonth(month).map(day)) },
   }
 }
