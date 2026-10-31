@@ -9,9 +9,9 @@ npm notice run next build
   Finished TypeScript in 2.4s ...
   Collecting page data using 5 workers ...
   Generating static pages using 5 workers (0/14) ...
-  Generating static pages using 5 workers (3/14) 
-  Generating static pages using 5 workers (6/14) 
-  Generating static pages using 5 workers (10/14) 
+  Generating static pages using 5 workers (3/14)
+  Generating static pages using 5 workers (6/14)
+  Generating static pages using 5 workers (10/14)
 [menu] public menu unavailable: DATABASE_URL is not set
 [menu] public menu unavailable: DATABASE_URL is not set
 ✓ Generating static pages using 5 workers (14/14) in 380ms
@@ -40,4 +40,3 @@ Route (app)
 
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand
-
