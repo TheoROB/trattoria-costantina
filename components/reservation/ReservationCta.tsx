@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CalendarIcon } from '@/components/icons'
 import { DishWidget } from '@/components/sections/DishWidget'
 import { reportReservationRequest } from '@/lib/reservation-requests/beacon'
+import { createModalOpening } from '@/lib/reservation-requests/opening'
 import './reservation-cta.css'
 
 // Floating "Réserver" button on every public page, opening the DISH widget in a native modal <dialog>
@@ -14,6 +15,8 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
   // The iframe is only mounted on the first opening, then kept so a booking in progress survives a close.
   const [loaded, setLoaded] = useState(false)
   const [sectionInView, setSectionInView] = useState(false)
+  // One instance for the component's life: re-renders keep its state, so they cannot count or drop an opening.
+  const [opening] = useState(() => createModalOpening(reportReservationRequest))
 
   // On the home page the reservation section already shows the widget: no duplicate button over it.
   useEffect(() => {
@@ -24,14 +27,14 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
     return () => observer.disconnect()
   }, [])
 
-  // Every opening of the dialog counts as one "demande de réservation" (anonymous, see app/api/reservation-requests).
-  // Counted here, in the click handler, never in an effect: re-renders cannot repeat it.
+  // Every opening of the dialog counts as one "demande de réservation" (anonymous, see app/api/reservation-requests),
+  // but only once the iframe has loaded while it is open: closed before `load`, it is never counted.
   const open = () => {
     const dialog = dialogRef.current
     if (!dialog || dialog.open) return
     setLoaded(true)
     dialog.showModal()
-    if (dialog.open) reportReservationRequest()
+    if (dialog.open) opening.opened()
   }
 
   return (
@@ -54,7 +57,10 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
         id="reservation-cta-dialog"
         className="reservation-cta-dialog"
         aria-labelledby="reservation-cta-title"
-        onClose={() => triggerRef.current?.focus()}
+        onClose={() => {
+          opening.closed()
+          triggerRef.current?.focus()
+        }}
         // A click on the backdrop lands on the <dialog> itself.
         onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close() }}
       >
@@ -68,7 +74,7 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
               </svg>
             </button>
           </div>
-          {loaded && <DishWidget />}
+          {loaded && <DishWidget onLoad={opening.loaded} />}
         </div>
       </dialog>
     </>

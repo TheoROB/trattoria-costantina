@@ -1,0 +1,30 @@
+npm notice run trattoria-costantina@1.0.0 npx
+npm notice run 'playwright' test -c playwright.client.config.ts
+[WebServer] npm notice run trattoria-costantina@1.0.0 start
+[WebServer] npm notice run next start -H 127.0.0.1 -p 3190
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+
+Running 10 tests using 1 worker
+
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   1 tests/client/reservation-opening.spec.ts:60:7 › floating button + modal › delayed load: nothing while the iframe is loading, one event once it has loaded (3.7s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   2 tests/client/reservation-opening.spec.ts:72:7 › floating button + modal › closed before load: never counted, even when the load ends afterwards; later reopenings count (5.2s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   3 tests/client/reservation-opening.spec.ts:90:7 › floating button + modal › reopened while still loading: one event, at load (3.6s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   4 tests/client/reservation-opening.spec.ts:102:7 › floating button + modal › re-renders while pending (scroll, resize) neither count nor drop the opening (3.6s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   5 tests/client/reservation-opening.spec.ts:116:7 › floating button + modal › network failure of the iframe: Chromium fires load on its error page, so the opening is counted (2.0s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   6 tests/client/reservation-opening.spec.ts:124:7 › floating button + modal › aborted before any response, dialog closed: nothing (1.9s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   7 tests/client/reservation-opening.spec.ts:135:7 › inline widget (home #reservation) › delayed load: in view but loading counts nothing; counts once one dwell after load (5.4s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   8 tests/client/reservation-opening.spec.ts:147:7 › inline widget (home #reservation) › scrolled away before load: nothing; coming back after load counts once (5.5s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓   9 tests/client/reservation-opening.spec.ts:160:7 › inline widget (home #reservation) › mobile menu open over the widget before the first count: suspended, then one event once closed (7.1s)
+[WebServer] [menu] public menu unavailable: DATABASE_URL is not set
+  ✓  10 tests/client/reservation-opening.spec.ts:180:7 › inline widget (home #reservation) › modal open over the inline widget: the inline one waits until the modal closes (7.4s)
+
+  10 passed (46.9s)

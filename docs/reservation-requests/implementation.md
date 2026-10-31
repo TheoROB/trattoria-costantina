@@ -9,12 +9,21 @@ Une **demande de réservation** est une ouverture effective du module DISH (ifra
 
 | Point d'entrée | Déclencheur | Code |
 | --- | --- | --- |
-| Bouton flottant « Réserver » (toutes les pages publiques, ordinateur et mobile) | `showModal()` réussi, dans le gestionnaire de clic | `components/reservation/ReservationCta.tsx` |
-| Module intégré de l'accueil (`#reservation`), atteint par tous les liens « Réserver » (navbar, menu mobile, hero, famille, contact, footer) ou en défilant | au moins la moitié de l'iframe (ou la moitié de l'écran si elle est plus haute) visible 1 s, onglet visible | `components/reservation/InlineReservationTracker.tsx` |
+| Bouton flottant « Réserver » (toutes les pages publiques, ordinateur et mobile) | `showModal()` réussi **puis** `load` de l'iframe pendant que ce modal est ouvert (immédiat aux réouvertures, l'iframe restant montée et chargée) | `components/reservation/ReservationCta.tsx`, `lib/reservation-requests/opening.ts` |
+| Module intégré de l'accueil (`#reservation`), atteint par tous les liens « Réserver » (navbar, menu mobile, hero, famille, contact, footer) ou en défilant | iframe chargée (`load`) **et** au moins la moitié de l'iframe (ou la moitié de l'écran si elle est plus haute) visible 1 s d'affilée, onglet visible, ni menu mobile ouvert ni modal par-dessus | `components/reservation/InlineReservationTracker.tsx`, `lib/reservation-requests/opening.ts` |
 
-- **Pas de doublon** : le modal compte dans le gestionnaire de clic (jamais dans un effet) et ignore un dialogue déjà ouvert. L'état du module intégré vit dans un seul effet (`[]`), donc un re-rendu n'y touche pas et le démontage nettoie l'observer, l'écouteur `visibilitychange` et le minuteur. Aucun identifiant n'est utilisé pour dédupliquer.
+- **Jamais avant `load`** (corrigé après la revue 1, voir `review-1.md`) : une ouverture fermée, ou un module intégré quitté, avant la fin du chargement de l'iframe n'est jamais comptée, même si `load` arrive ensuite. Les `load` suivants (navigation interne à DISH) ne recomptent pas la même ouverture.
+- **Pas de doublon** : le modal ignore un dialogue déjà ouvert ; sa machine d'état (`createModalOpening`) est créée une fois par composant, donc un re-rendu ne compte ni n'annule rien. L'état du module intégré (`createInlineDwell`) vit dans un seul effet (`[]`) : un re-rendu n'y touche pas, une mise à jour ne relance ni ne double le minuteur, et le démontage nettoie observers, écouteurs et minuteur. Aucun identifiant n'est utilisé pour dédupliquer.
+- **Occultation** : le minuteur du module intégré est suspendu tant qu'un `<dialog open>` existe ou que le bouton du menu mobile est affiché avec `aria-expanded="true"` (état React existant de la navbar, lu dans le DOM via `MutationObserver`, sans donnée personnelle, sans toucher à l'auth). À la fermeture, il repart de zéro (1 s pleine) ; recouvrir puis découvrir un module déjà compté ne recompte pas.
+- **Chargement avant hydratation** : si l'iframe intégrée a fini de charger avant que React n'attache l'écouteur, l'entrée Resource Timing `initiatorType: 'iframe'` de son URL en tient lieu. Si le navigateur ne l'expose pas (tampon plein, navigateur non conforme), l'ouverture reste en attente et n'est pas comptée : sous-comptage possible, jamais de comptage anticipé.
 - **Réouverture volontaire = nouvelle demande** : fermer puis rouvrir le modal compte à nouveau. Le module intégré compte à nouveau après avoir entièrement quitté l'écran puis être revenu. Un clic sur un lien « Réserver » alors que le module intégré est déjà à l'écran et déjà compté ne compte pas : ce n'est pas une ouverture.
 - Ce n'est ni un clic, ni une réservation (celles-ci restent dans DISH), ni un visiteur.
+
+### Ce que `load` prouve, et ce qu'il ne prouve pas
+
+- L'iframe DISH est cross-origin : le parent ne lit ni son contenu, ni son statut HTTP, ni son titre, et DISH n'envoie aucun `postMessage` documenté (voir `evidence/dish-audit.md`). Il n'existe donc **aucun signal fiable de réussite côté parent**.
+- `load` dit seulement que l'iframe a fini de charger *un* document. En cas d'erreur réseau, Chromium affiche sa propre page d'erreur et déclenche quand même `load` : l'ouverture est comptée. Vérifié par le test client « network failure of the iframe » (`route.abort('connectionrefused')`). Une page d'erreur servie par DISH (5xx) est de même indiscernable. Un bloqueur qui empêche toute réponse laisse l'ouverture en attente (non comptée).
+- `load` ne dit jamais qu'une réservation a été faite. Le comptage des confirmations reste à l'arrêt (aucun changement de comportement à ce sujet).
 
 ## Ingestion (`POST /api/reservation-requests`)
 
@@ -62,6 +71,22 @@ Une **demande de réservation** est une ouverture effective du module DISH (ifra
 
 Le smoke test n'a envoyé aucune requête valide, pour que le serveur ne touche à aucune base, quelle que soit sa configuration d'environnement.
 
+### Corrections de la revue 1 (31/10/2026, cette machine)
+
+Logs bruts (chemins locaux masqués, aucune donnée personnelle) : `evidence/logs/`.
+
+| Commande | Résultat |
+| --- | --- |
+| `npm run lint` | OK (`lint.log`) |
+| `npm run typecheck` | OK (`typecheck.log`) |
+| `npm test` | 21 fichiers, **308 tests OK** (`unit.log`), dont 14 nouveaux dans `lib/reservation-requests/opening.test.ts` : chargement différé, fermeture avant `load`, réouverture en attente, réouvertures après chargement, `load` répétés, re-rendus, quitté avant `load`, occultation avant la première demande puis reprise sans doublon, onglet masqué, nettoyage |
+| `npm run build` | OK (`build.log`) |
+| `npx playwright test -c playwright.client.config.ts` (après le build, jamais en parallèle) | **10 tests OK**, 1 worker, Chromium (`client-browser.log`) |
+
+`playwright.client.config.ts` : aucun `globalSetup`, aucun fichier `.env` lu par la config, serveur `next start` local sur `127.0.0.1:3190` avec `DATABASE_URL` explicitement vide et `APP_ORIGIN` local (aucun `.env*` n'existe dans ce worktree ; `next start` en chargerait un s'il existait). **Stubs déclarés** : l'iframe DISH est servie par `page.route` (page factice retenue jusqu'à libération) et `POST /api/reservation-requests` reçoit un 204 de `page.route`, sans atteindre le serveur. Ces tests prouvent *quand le client envoie*, pas la persistance. Aucun accès live ni DISH. Le serveur est arrêté par Playwright en fin de run ; aucun port 3190 en écoute ensuite (vérifié).
+
+Non fait : contre-épreuve par mutation (désactiver l'occultation et reconstruire pour voir le test échouer).
+
 ## Non exécuté : blocages
 
 - **Tests d'intégration (`npm run test:integration`)** : non lancés. Aucune base locale n'a pu être prouvée sur cette machine : pas de Docker, pas de binaire MariaDB/MySQL, aucun port 3306/3307 en écoute. Installer quoi que ce soit était hors périmètre, et `.env*` n'a pas été lu. Les tests existent (`tests/integration/reservation-requests.test.ts` : migration additive et relançable, colonnes sans données personnelles, quota concurrent à 25 requêtes et sur deux pools, purge, activation, regroupement par jour de Paris autour du changement d'heure, endpoint) et j'ai ajouté un cas `loadSummary`. **À exécuter dès qu'une base locale `*_test` est disponible.** La migration 0006 n'a donc été appliquée sur aucune base dans cette étape.
@@ -70,7 +95,8 @@ Le smoke test n'a envoyé aucune requête valide, pour que le serveur ne touche 
 
 ## Points d'attention pour la QA et la revue
 
-- `IntersectionObserver` ne voit pas l'occultation : un module intégré visible sous le menu mobile ouvert pendant plus d'1 s serait compté. Le cas est rare, et la plupart du temps l'ouverture était déjà comptée.
+- Occultation : seuls le menu mobile de la navbar et les `<dialog>` ouverts sont détectés. Un autre élément posé par-dessus (bannière d'un navigateur, extension) ne l'est pas.
+- Les specs DB `tests/e2e/reservation-requests.spec.ts` n'ont pas été modifiées : elles libèrent le stub DISH immédiatement, ce qui reste compatible avec l'attente de `load`. Elles sont toujours à exécuter avec la base de test.
 - L'affichage du rapport admin écrit la ligne d'activation lors d'un GET (une seule fois).
 - Le quota est fixe par heure UTC : jusqu'à 2 × 200 ouvertures possibles à cheval sur deux heures.
 - Le spec e2e admin clique le lien « Demandes de réservation » de l'en-tête. Le lien de l'encart a un autre libellé (« Voir le détail… »), pour éviter une ambiguïté de sélecteur.
