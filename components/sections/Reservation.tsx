@@ -1,4 +1,5 @@
 import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
+import { InlineReservationTracker } from '@/components/reservation/InlineReservationTracker'
 import { site } from '@/lib/site'
 import { DishWidget } from './DishWidget'
 
@@ -33,7 +34,9 @@ export function Reservation() {
 
           <div className="reservation-form-card">
             <h3>Réserver une table</h3>
-            <DishWidget />
+            <InlineReservationTracker>
+              <DishWidget />
+            </InlineReservationTracker>
           </div>
         </div>
       </div>

@@ -67,6 +67,8 @@ const CATEGORIES = [
 ]
 
 describe('0005_remove_legacy_boissons_category', () => {
+  // Stops at 0005 so the later migrations do not show up in `applied`.
+  const UP_TO_0005 = migrationsBefore('0006')
   const menuRows = async () => (await conn.query<mysql.RowDataPacket[]>('SELECT * FROM menu_items ORDER BY id'))[0]
   const appliedVersions = async () => (await conn.query<mysql.RowDataPacket[]>('SELECT version FROM schema_migrations'))[0].map((r) => r.version)
 
@@ -80,7 +82,7 @@ describe('0005_remove_legacy_boissons_category', () => {
 
   it('applies when no item is left in "boissons", without touching the items; then only the 11 categories are accepted', async () => {
     const before = await menuRows()
-    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
+    expect((await runMigrations(url, UP_TO_0005)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
     expect(await menuRows()).toEqual(before)
     for (const category_key of CATEGORIES) {
       await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `New ${category_key}`, price_cents: 500 }])
@@ -95,7 +97,7 @@ describe('0005_remove_legacy_boissons_category', () => {
     await conn.query("INSERT INTO menu_items SET category_key = 'boissons', name = 'Coca', price_cents = 300")
     const before = await menuRows()
 
-    await expect(runMigrations(url, MIGRATIONS_DIR)).rejects.toThrow(/chk_menu_items_category/)
+    await expect(runMigrations(url, UP_TO_0005)).rejects.toThrow(/chk_menu_items_category/)
     expect(await menuRows()).toEqual(before)
     expect(await appliedVersions()).not.toContain('0005_remove_legacy_boissons_category.sql')
     // The 0004 constraint is still in place.
@@ -103,7 +105,7 @@ describe('0005_remove_legacy_boissons_category', () => {
 
     // Once the items are moved, the migration goes through.
     await conn.query("UPDATE menu_items SET category_key = 'sans_alcool' WHERE category_key = 'boissons'")
-    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
+    expect((await runMigrations(url, UP_TO_0005)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
   })
 })
 
