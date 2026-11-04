@@ -58,7 +58,7 @@ test('admin dashboard exposes the contracted controls and category order', async
   await expect(item.getByRole('link', { name: 'Modifier' })).toHaveAttribute('href', /\/admin\/menu\/\d+$/)
   await expect(page.getByRole('link', { name: 'Ajouter un élément' })).toHaveAttribute('href', '/admin/menu/new?categorie=pizzas')
   await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
-  const reservations = page.getByText('Réservations').locator('..')
+  const reservations = page.locator('.admin-reservations')
   await expect(reservations).toContainText('Les réservations sont gérées via DISH Reservation.')
 })
 

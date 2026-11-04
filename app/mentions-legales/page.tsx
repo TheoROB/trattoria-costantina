@@ -77,6 +77,8 @@ export default function MentionsLegalesPage() {
         <p>
           Le module de réservation en ligne est fourni par DISH (reservation.dish.co) et proposé sur les
           pages du site : son utilisation relève de la politique de confidentialité et de cookies de ce prestataire.
+          Lorsqu&apos;une demande de réservation y est envoyée, le site enregistre uniquement sa date, son heure et
+          son nombre de couverts, pour le suivi du restaurant : ni nom, ni coordonnées, ni message.
         </p>
       </main>
       <Footer />

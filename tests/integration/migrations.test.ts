@@ -80,7 +80,7 @@ describe('0005_remove_legacy_boissons_category', () => {
 
   it('applies when no item is left in "boissons", without touching the items; then only the 11 categories are accepted', async () => {
     const before = await menuRows()
-    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
+    expect((await runMigrations(url, migrationsBefore('0006'))).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
     expect(await menuRows()).toEqual(before)
     for (const category_key of CATEGORIES) {
       await conn.query('INSERT INTO menu_items SET ?', [{ category_key, name: `New ${category_key}`, price_cents: 500 }])
@@ -103,7 +103,7 @@ describe('0005_remove_legacy_boissons_category', () => {
 
     // Once the items are moved, the migration goes through.
     await conn.query("UPDATE menu_items SET category_key = 'sans_alcool' WHERE category_key = 'boissons'")
-    expect((await runMigrations(url, MIGRATIONS_DIR)).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
+    expect((await runMigrations(url, migrationsBefore('0006'))).applied).toEqual(['0005_remove_legacy_boissons_category.sql'])
   })
 })
 

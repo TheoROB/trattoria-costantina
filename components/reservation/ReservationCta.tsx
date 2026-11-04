@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CalendarIcon } from '@/components/icons'
 import { DishWidget } from '@/components/sections/DishWidget'
+import { listenForSiteReservations } from '@/lib/site-reservations/listener'
 import './reservation-cta.css'
 
 // Floating "Réserver" button on every public page, opening the DISH widget in a native modal <dialog>
@@ -22,6 +23,9 @@ export function ReservationCta({ hidden = false }: { hidden?: boolean }) {
     observer.observe(section)
     return () => observer.disconnect()
   }, [])
+
+  // Mounted once per public page: also covers the inline widget of the home page.
+  useEffect(() => listenForSiteReservations(), [])
 
   const open = () => {
     setLoaded(true)
