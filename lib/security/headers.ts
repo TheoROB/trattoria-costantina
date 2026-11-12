@@ -1,17 +1,34 @@
 // Origin of the DISH Reservation iframe (see components/sections/Reservation.tsx).
 export const DISH_ORIGIN = 'https://reservation.dish.co'
 
-export function buildContentSecurityPolicy({ nonce, isDev }: { nonce: string; isDev: boolean }) {
+// reCAPTCHA Enterprise (contact form, lib/contact/recaptcha-client.ts), loaded from www.recaptcha.net. Scripts (checked
+// in a browser): enterprise.js, then its code from www.gstatic.com. Frames: enterprise.js points them at
+// www.recaptcha.net/recaptcha/enterprise/, but Google's code still names www.google.com and only Google documents
+// frame hosts (www.google.com and recaptcha.google.com), so these stay allowed until a production check with the real
+// key shows no frame from them. The assessment is created server-side: no connect-src is needed.
+export const RECAPTCHA_SCRIPT_SOURCES = ['https://www.recaptcha.net/recaptcha/', 'https://www.gstatic.com/recaptcha/']
+export const RECAPTCHA_FRAME_SOURCES = [
+  'https://www.recaptcha.net/recaptcha/',
+  'https://www.google.com/recaptcha/',
+  'https://recaptcha.google.com/recaptcha/',
+]
+
+// `recaptcha`: only when a site key is embedded in the build, otherwise Google is not allowed at all.
+export function buildContentSecurityPolicy({ nonce, isDev, recaptcha = false }: { nonce: string; isDev: boolean; recaptcha?: boolean }) {
+  // With 'strict-dynamic', CSP3 browsers ignore host sources and trust what the nonce'd scripts load; the hosts only
+  // serve older browsers.
+  const recaptchaScripts = recaptcha ? ` ${RECAPTCHA_SCRIPT_SOURCES.join(' ')}` : ''
+  const recaptchaFrames = recaptcha ? ` ${RECAPTCHA_FRAME_SOURCES.join(' ')}` : ''
   const directives = [
     "default-src 'self'",
     // React needs eval only in development for debugging stacks.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}${recaptchaScripts}`,
     // Dev overlay injects inline styles without nonce.
     `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     "img-src 'self' data:",
     "font-src 'self'",
     "connect-src 'self'",
-    `frame-src ${DISH_ORIGIN}`,
+    `frame-src ${DISH_ORIGIN}${recaptchaFrames}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

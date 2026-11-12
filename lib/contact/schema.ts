@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { formDataToObject } from '@/lib/menu/admin-input'
-import { CONTACT_LIMITS, EMPTY_CONTACT_VALUES, HONEYPOT_FIELD, type ContactField, type ContactValues } from './fields'
+import { containsLink } from './links'
+import { CONTACT_MESSAGES } from './messages'
+import { CONTACT_LIMITS, EMPTY_CONTACT_VALUES, HONEYPOT_FIELD, RECAPTCHA_TOKEN_FIELD, type ContactField, type ContactValues } from './fields'
 
 export type ContactMessage = { name: string; email: string; phone: string | null; message: string }
 
@@ -20,7 +22,8 @@ const schema = z.strictObject({
     .trim()
     .min(1, 'Indiquez votre nom.')
     .max(CONTACT_LIMITS.name, `Le nom ne doit pas dépasser ${CONTACT_LIMITS.name} caractères.`)
-    .refine((v) => !SINGLE_LINE_FORBIDDEN.test(v), 'Le nom contient des caractères non autorisés.'),
+    .refine((v) => !SINGLE_LINE_FORBIDDEN.test(v), 'Le nom contient des caractères non autorisés.')
+    .refine((v) => !containsLink(v), CONTACT_MESSAGES.linkInName),
   email: z
     .string({ error: 'Indiquez votre adresse e-mail.' })
     .trim()
@@ -44,7 +47,8 @@ const schema = z.strictObject({
         .min(1, 'Écrivez votre message.')
         .min(CONTACT_LIMITS.messageMin, `Votre message est trop court (${CONTACT_LIMITS.messageMin} caractères minimum).`)
         .max(CONTACT_LIMITS.message, `Votre message ne doit pas dépasser ${CONTACT_LIMITS.message} caractères.`)
-        .refine((v) => !MULTI_LINE_FORBIDDEN.test(v), 'Le message contient des caractères non autorisés.'),
+        .refine((v) => !MULTI_LINE_FORBIDDEN.test(v), 'Le message contient des caractères non autorisés.')
+        .refine((v) => !containsLink(v), CONTACT_MESSAGES.linkInMessage),
     ),
 })
 
@@ -61,6 +65,9 @@ export function parseContactForm(formData: FormData): ContactParseResult {
   const object = formDataToObject(formData)
   if (!object) return { kind: 'invalid', fieldErrors: {}, values: EMPTY_CONTACT_VALUES }
   const { [HONEYPOT_FIELD]: honeypot, ...fields } = object
+  // Checked separately by the Server Action (lib/contact/recaptcha.ts), never part of the message.
+  delete fields[RECAPTCHA_TOKEN_FIELD]
+  // Before any validation: a bot learns nothing from field errors.
   if (honeypot) return { kind: 'spam' }
   const result = schema.safeParse(fields)
   if (!result.success) {

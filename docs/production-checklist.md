@@ -16,6 +16,11 @@ a chat or a shell command line (it lands in the shell history): use `read -rs` a
 | `RESEND_API_KEY` | yes (contact) | Resend API key, "Sending access" restricted to `trattoriacostantina.fr` (secret). |
 | `CONTACT_FROM` | yes (contact) | `Trattoria Costantina <site@trattoriacostantina.fr>`. Must be on the domain verified at Resend, otherwise Resend refuses the mail (logged `HTTP 403 validation_error`). |
 | `CONTACT_TO` | yes (contact) | `trattoria.costantina@gmail.com`. No fallback: without it the form shows "temporarily unavailable". |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | yes (contact) | reCAPTCHA Enterprise key id (Google Cloud → Fraud Defense, key "Trattoria", score-based, domain `trattoriacostantina.fr`). Public, but **embedded at build time**: set it before the build. |
+| `RECAPTCHA_PROJECT_ID` | yes (contact) | Google Cloud project **ID** (not its display name) that owns the key. |
+| `RECAPTCHA_API_KEY` | yes (contact) | Google Cloud API key restricted to the reCAPTCHA Enterprise API (secret). |
+| `RECAPTCHA_MIN_SCORE` | no | Score threshold, default `0.5`. |
+| `RECAPTCHA_API_BASE_URL` | **no — never set** | Tests only (local reCAPTCHA double, loopback only). |
 | `RESEND_BASE_URL` | **no — never set** | Tests only (local Resend double, loopback only). Any non-loopback value disables the form. |
 | `HOSTINGER_PROBE_TOKEN` | **no — delete** | Only used by the throwaway `chore/hostinger-probe` branch; nothing in the production code reads it. |
 
@@ -107,6 +112,17 @@ Delete the variable in hPanel (and any test application deployed from `chore/hos
       - `[contact] form disabled, mail configuration incomplete: …`: a variable is missing or invalid (only names are listed);
       - `[contact] send failed: HTTP <status> [<resend error name>]`, `… timeout` or `… network error`: Resend refused or
         could not be reached (e.g. `HTTP 401`/`403`: wrong key or unverified domain, `HTTP 429`: quota or rate limit).
+
+## Contact form (reCAPTCHA Enterprise)
+
+- [ ] Google Cloud → Fraud Defense → key "Trattoria": `trattoriacostantina.fr` is in the allowed domains.
+- [ ] The project has an active billing account and the reCAPTCHA Enterprise API is enabled; the Cloud Data Processing
+      Addendum is accepted.
+- [ ] Set the three `RECAPTCHA_*` / `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` variables together (only some of them: the form is
+      disabled, logged) and check `APP_ORIGIN` is `https://trattoriacostantina.fr` (the token hostname is checked against it).
+- [ ] After deploying: send a real message; the browser console shows no CSP violation, the server log shows no
+      `[contact]` reCAPTCHA refusal. If no frame is loaded from `www.google.com`, the `google.com` entries of `frame-src`
+      in `lib/security/headers.ts` can be removed.
 
 ## Backups
 

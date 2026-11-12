@@ -116,3 +116,16 @@
   .contact-card { padding: 1.5rem 1.25rem; }
   .contact-row { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* reCAPTCHA Enterprise badge (appended to <body> by enterprise.js): hidden, as Google allows, because the form shows
+   the required notice instead (.contact-recaptcha). Fixed so that it never takes room, even if the CSP blocks its
+   inline styles. Kept rendered (no display: none), which reCAPTCHA needs to score visitors. */
+.grecaptcha-badge {
+  visibility: hidden;
+  position: fixed !important;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.contact-privacy.contact-recaptcha { margin-top: -0.5rem; }

@@ -59,6 +59,23 @@ export default function MentionsLegalesPage() {
           (Resend, Inc., États-Unis), et reçues dans la boîte Gmail (Google) du restaurant. Elles ne sont pas
           enregistrées dans la base de données du site.
         </p>
+        {/* Matches lib/contact/recaptcha.ts (reCAPTCHA Enterprise, only when its keys are configured). Since April 2, 2026
+            Google processes reCAPTCHA data as a processor only (Google reCAPTCHA FAQ). Transfers: Cloud Data Processing
+            Addendum, Google LLC certified to the EU-U.S. Data Privacy Framework (cloud.google.com/terms). */}
+        <p>
+          Pour la sécurité du formulaire de contact, c&apos;est-à-dire la prévention du spam et des envois abusifs,
+          le site utilise le service reCAPTCHA de Google Cloud. Le responsable de ce traitement est la société{' '}
+          {site.company.name}, éditrice du site ; Google agit en qualité de sous-traitant, uniquement pour fournir ce
+          service. Lors de l&apos;envoi du formulaire, reCAPTCHA analyse votre adresse IP, des informations
+          techniques sur votre navigateur et votre appareil, et vos interactions avec la page ; le contenu de votre
+          message n&apos;est pas transmis à Google. Ces données servent uniquement à évaluer, au moment de
+          l&apos;envoi, si celui-ci provient d&apos;une personne ou d&apos;un robot. Ce traitement repose sur
+          l&apos;intérêt légitime de l&apos;éditeur à protéger son site et sa messagerie contre les abus (article
+          6.1.f du RGPD). Ces données peuvent être traitées hors de l&apos;Union européenne, notamment aux
+          États-Unis : ces transferts sont encadrés par les garanties prévues par l&apos;avenant relatif au
+          traitement des données de Google Cloud, Google LLC étant certifiée au cadre de protection des données
+          UE–États-Unis (Data Privacy Framework), et à défaut par des clauses contractuelles types.
+        </p>
         <p>
           Conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et
           Libertés, vous disposez d&apos;un droit d&apos;accès, de rectification, d&apos;effacement,
@@ -68,11 +85,20 @@ export default function MentionsLegalesPage() {
         </p>
 
         <h2>Cookies</h2>
-        {/* Matches the code: no analytics or ads; the only first-party cookie is the admin session (lib/auth/dal.ts). */}
+        {/* Matches the code: no analytics or ads; the only first-party cookie is the admin session (lib/auth/dal.ts).
+            _GRECAPTCHA: "necessary cookie" set by reCAPTCHA for its risk analysis (Google reCAPTCHA FAQ), on the pages
+            that load enterprise.js, i.e. those with the contact form; CNIL exemption for security cookies. No lifetime
+            is published by Google, so none is stated. */}
         <p>
-          Ce site ne dépose aucun cookie de mesure d&apos;audience ni de publicité. Seul l&apos;espace
+          Ce site ne dépose aucun cookie de mesure d&apos;audience ni de publicité. L&apos;espace
           d&apos;administration, réservé à l&apos;équipe du restaurant, utilise un cookie de session strictement
           nécessaire à la connexion.
+        </p>
+        <p>
+          Sur les pages proposant le formulaire de contact, le service reCAPTCHA dépose le cookie{' '}
+          <code>_GRECAPTCHA</code>, utilisé pour l&apos;analyse de risque qui protège ce formulaire contre le spam et
+          les abus. Strictement nécessaire à la sécurité du formulaire et n&apos;étant utilisé à aucune autre fin,
+          il ne requiert pas votre consentement.
         </p>
         <p>
           Le module de réservation en ligne est fourni par DISH (reservation.dish.co) et proposé sur les
