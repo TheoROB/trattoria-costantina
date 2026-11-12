@@ -46,11 +46,12 @@ describe('buildContentSecurityPolicy', () => {
       "'self'",
       `'nonce-${nonce}'`,
       "'strict-dynamic'",
-      'https://www.google.com/recaptcha/',
+      'https://www.recaptcha.net/recaptcha/',
       'https://www.gstatic.com/recaptcha/',
     ])
     expect(d['frame-src']).toEqual([
       'https://reservation.dish.co',
+      'https://www.recaptcha.net/recaptcha/',
       'https://www.google.com/recaptcha/',
       'https://recaptcha.google.com/recaptcha/',
     ])
@@ -58,6 +59,7 @@ describe('buildContentSecurityPolicy', () => {
     expect(d['connect-src']).toEqual(["'self'"])
     expect(d['style-src']).toEqual(["'self'", `'nonce-${nonce}'`])
     const without = buildContentSecurityPolicy({ nonce, isDev: false })
+    expect(without).not.toContain('recaptcha')
     expect(without).not.toContain('google')
     expect(without).not.toContain('gstatic')
   })

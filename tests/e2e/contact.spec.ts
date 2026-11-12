@@ -220,9 +220,9 @@ test('without reCAPTCHA keys, no Google script nor notice is added', async ({ pa
 test('with reCAPTCHA, a token for the "contact" action is checked before the message is sent', async ({ page }) => {
   test.skip(!recaptcha || !resend, 'needs both local doubles (RECAPTCHA_API_BASE_URL and RESEND_BASE_URL)')
   const form = await openForm(page)
-  await expect(form.getByText(/Ce site est protégé par reCAPTCHA/)).toBeVisible()
-  await expect(form.getByRole('link', { name: 'Règles de confidentialité' })).toHaveAttribute('href', 'https://policies.google.com/privacy')
-  await expect(form.getByRole('link', { name: 'Conditions d’utilisation' })).toHaveAttribute('href', 'https://policies.google.com/terms')
+  await expect(form.locator('.contact-recaptcha')).toHaveText('Ce site est protégé par reCAPTCHA.')
+  // Processor model since April 2026: no link to Google's policies.
+  await expect(form.locator('a[href*="policies.google.com"]')).toHaveCount(0)
   const before = { assessments: recaptcha!.state.requests.length, mails: resend!.requests.length }
   await fillValid(page)
   await form.getByRole('button', { name: 'Envoyer le message' }).click()

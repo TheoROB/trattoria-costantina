@@ -123,15 +123,9 @@ export function ContactForm({ nonce }: { nonce?: string }) {
         rectifier ou les faire effacer, écrivez-nous à <a href={site.email.href}>{site.email.display}</a> (
         <Link href="/mentions-legales#donnees-personnelles">données personnelles</Link>).
       </p>
-      {/* Required by Google when the reCAPTCHA badge is hidden (contact.css). */}
-      {RECAPTCHA_SITE_KEY && (
-        <p className="contact-privacy contact-recaptcha">
-          Ce site est protégé par reCAPTCHA et les{' '}
-          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Règles de confidentialité</a> et{' '}
-          <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Conditions d’utilisation</a> de
-          Google s’appliquent.
-        </p>
-      )}
+      {/* Required by Google when the badge is hidden (contact.css). Since April 2, 2026 Google only processes the data
+          for the site (processor model, Google reCAPTCHA FAQ): no link to Google's Privacy Policy or Terms anymore. */}
+      {RECAPTCHA_SITE_KEY && <p className="contact-privacy contact-recaptcha">Ce site est protégé par reCAPTCHA.</p>}
 
       <div role="status" aria-live="polite" className={`contact-status contact-status-${state.status}`}>
         {state.message}

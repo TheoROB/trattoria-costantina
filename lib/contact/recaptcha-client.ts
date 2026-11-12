@@ -2,8 +2,11 @@
 // by `next build`: changing it needs a rebuild.
 export const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim() || null
 
+// www.recaptcha.net rather than www.google.com (Google FAQ): same service, without the cookies google.com may hold.
+// enterprise.js then points reCAPTCHA's iframes at www.recaptcha.net too (window.__recaptcha_api); its code comes
+// from www.gstatic.com.
 export const recaptchaScriptUrl = (siteKey: string) =>
-  `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`
+  `https://www.recaptcha.net/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`
 
 type GrecaptchaEnterprise = {
   ready: (callback: () => void) => void

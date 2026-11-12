@@ -1,10 +1,17 @@
 // Origin of the DISH Reservation iframe (see components/sections/Reservation.tsx).
 export const DISH_ORIGIN = 'https://reservation.dish.co'
 
-// reCAPTCHA Enterprise (contact form, lib/contact/recaptcha-client.ts), as documented by Google: enterprise.js and the
-// scripts it loads, and its invisible iframes. The assessment is created server-side: no connect-src is needed.
-export const RECAPTCHA_SCRIPT_SOURCES = ['https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/']
-export const RECAPTCHA_FRAME_SOURCES = ['https://www.google.com/recaptcha/', 'https://recaptcha.google.com/recaptcha/']
+// reCAPTCHA Enterprise (contact form, lib/contact/recaptcha-client.ts), loaded from www.recaptcha.net. Scripts (checked
+// in a browser): enterprise.js, then its code from www.gstatic.com. Frames: enterprise.js points them at
+// www.recaptcha.net/recaptcha/enterprise/, but Google's code still names www.google.com and only Google documents
+// frame hosts (www.google.com and recaptcha.google.com), so these stay allowed until a production check with the real
+// key shows no frame from them. The assessment is created server-side: no connect-src is needed.
+export const RECAPTCHA_SCRIPT_SOURCES = ['https://www.recaptcha.net/recaptcha/', 'https://www.gstatic.com/recaptcha/']
+export const RECAPTCHA_FRAME_SOURCES = [
+  'https://www.recaptcha.net/recaptcha/',
+  'https://www.google.com/recaptcha/',
+  'https://recaptcha.google.com/recaptcha/',
+]
 
 // `recaptcha`: only when a site key is embedded in the build, otherwise Google is not allowed at all.
 export function buildContentSecurityPolicy({ nonce, isDev, recaptcha = false }: { nonce: string; isDev: boolean; recaptcha?: boolean }) {

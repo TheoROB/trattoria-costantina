@@ -47,7 +47,7 @@ export async function startRecaptchaDouble(port: number, hostname: string) {
 export async function stubEnterpriseScript(page: Page) {
   const executed: string[] = []
   await page.exposeFunction('__recaptchaExecuted', (action: string) => void executed.push(action))
-  await page.route('https://www.google.com/recaptcha/enterprise.js*', (route) =>
+  await page.route('https://www.recaptcha.net/recaptcha/enterprise.js*', (route) =>
     route.fulfill({
       contentType: 'text/javascript',
       body: `window.grecaptcha = { enterprise: {
