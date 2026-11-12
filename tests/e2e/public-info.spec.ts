@@ -56,4 +56,10 @@ test('the legal notice has the personal data section linked from the contact for
   }
   await expect(main.getByRole('link', { name: 'www.cnil.fr' })).toHaveAttribute('href', 'https://www.cnil.fr')
   await expect(main.getByRole('heading', { name: 'Cookies' })).toBeVisible()
+  // reCAPTCHA: Google as a processor, no link to Google's own policies (since April 2, 2026), its necessary cookie.
+  await expect(main).toContainText('Google agit en qualité de sous-traitant')
+  await expect(main).toContainText('article 6.1.f du RGPD')
+  await expect(main).toContainText("le contenu de votre message n'est pas transmis à Google")
+  await expect(main).toContainText('_GRECAPTCHA')
+  await expect(main.locator('a[href*="policies.google.com"]')).toHaveCount(0)
 })
