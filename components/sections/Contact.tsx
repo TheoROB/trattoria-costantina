@@ -1,7 +1,10 @@
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { ContactForm } from './ContactForm'
 
-export function Contact() {
+export async function Contact() {
+  // Per-request CSP nonce set by proxy.ts, for the reCAPTCHA script of the form.
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   return (
     <section id="contact" className="section-contact">
       <div className="container">
@@ -14,7 +17,7 @@ export function Contact() {
           </p>
         </div>
         <div className="contact-card">
-          <ContactForm />
+          <ContactForm nonce={nonce} />
         </div>
       </div>
     </section>

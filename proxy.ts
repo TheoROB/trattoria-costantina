@@ -3,7 +3,12 @@ import { buildContentSecurityPolicy } from '@/lib/security/headers'
 
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const csp = buildContentSecurityPolicy({ nonce, isDev: process.env.NODE_ENV === 'development' })
+  const csp = buildContentSecurityPolicy({
+    nonce,
+    isDev: process.env.NODE_ENV === 'development',
+    // Literal name: the site key embedded by `next build`, the same one the contact form uses.
+    recaptcha: !!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim(),
+  })
 
   // Next.js reads the nonce from the request CSP header and applies it to its own scripts.
   const requestHeaders = new Headers(request.headers)

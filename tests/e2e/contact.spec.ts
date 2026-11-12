@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import { startRecaptchaDouble, stubEnterpriseScript } from './recaptcha-double'
 import { startResendDouble } from './resend-double'
 
 // The e2e server inherits this process's environment (and .env.local). Three modes:
@@ -13,15 +14,33 @@ const baseUrl = process.env.RESEND_BASE_URL?.trim()
 const doublePort = baseUrl && new URL(baseUrl).hostname === '127.0.0.1' ? Number(new URL(baseUrl).port) : null
 const realResend = !!apiKey && doublePort === null
 
+// reCAPTCHA Enterprise, same idea. The site key is embedded by `next build`: build with the same
+// NEXT_PUBLIC_RECAPTCHA_SITE_KEY as this run. With RECAPTCHA_API_BASE_URL=http://127.0.0.1:<port>, a local double
+// answers the assessments and enterprise.js is stubbed in the page, e.g. (on top of the Resend double):
+//   NEXT_PUBLIC_RECAPTCHA_SITE_KEY=e2e-site-key RECAPTCHA_PROJECT_ID=e2e-project RECAPTCHA_API_KEY=e2e-only-key \
+//   RECAPTCHA_API_BASE_URL=http://127.0.0.1:3791 (for `npm run build` and `npx playwright test contact`)
+const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim()
+const recaptchaBase = process.env.RECAPTCHA_API_BASE_URL?.trim()
+const recaptchaPort = siteKey && recaptchaBase && new URL(recaptchaBase).hostname === '127.0.0.1' ? Number(new URL(recaptchaBase).port) : null
+
 // One worker for the whole file: the double listens on a fixed port.
 test.describe.configure({ mode: 'serial' })
 
 let resend: Awaited<ReturnType<typeof startResendDouble>> | null = null
-test.beforeAll(async () => {
+let recaptcha: Awaited<ReturnType<typeof startRecaptchaDouble>> | null = null
+test.beforeAll(async ({ baseURL }) => {
   if (doublePort) resend = await startResendDouble(doublePort)
+  if (recaptchaPort) recaptcha = await startRecaptchaDouble(recaptchaPort, new URL(baseURL!).hostname)
 })
 test.afterAll(async () => {
   await resend?.close()
+  await recaptcha?.close()
+})
+test.beforeEach(async ({ page }) => {
+  if (recaptcha) {
+    recaptcha.state.score = 0.9
+    await stubEnterpriseScript(page)
+  }
 })
 
 const SENT = 'Merci, votre message a bien été envoyé.'
@@ -172,9 +191,53 @@ test('a valid message is sent once as plain text to the restaurant and the form 
   expect(body.text).toContain('Téléphone : 06 12 34 56 78')
 })
 
+test('without reCAPTCHA keys, no Google script nor notice is added', async ({ page }) => {
+  test.skip(!!siteKey, 'reCAPTCHA is configured for this build')
+  const requested: string[] = []
+  page.on('request', (request) => requested.push(request.url()))
+  const form = await openForm(page)
+  await page.waitForLoadState('load')
+  await expect(form.locator('input[name="recaptcha-token"]')).toHaveCount(0)
+  await expect(form.getByText(/protégé par reCAPTCHA/)).toHaveCount(0)
+  expect(requested.filter((url) => url.includes('recaptcha'))).toEqual([])
+})
+
+test('with reCAPTCHA, a token for the "contact" action is checked before the message is sent', async ({ page }) => {
+  test.skip(!recaptcha || !resend, 'needs both local doubles (RECAPTCHA_API_BASE_URL and RESEND_BASE_URL)')
+  const form = await openForm(page)
+  await expect(form.getByText(/Ce site est protégé par reCAPTCHA/)).toBeVisible()
+  await expect(form.getByRole('link', { name: 'Règles de confidentialité' })).toHaveAttribute('href', 'https://policies.google.com/privacy')
+  await expect(form.getByRole('link', { name: 'Conditions d’utilisation' })).toHaveAttribute('href', 'https://policies.google.com/terms')
+  const before = { assessments: recaptcha!.state.requests.length, mails: resend!.requests.length }
+  await fillValid(page)
+  await form.getByRole('button', { name: 'Envoyer le message' }).click()
+  await expect(form.getByRole('status')).toContainText(SENT)
+  await expect(form.getByLabel('Message')).toHaveValue('')
+
+  const assessments = recaptcha!.state.requests.slice(before.assessments)
+  expect(assessments).toHaveLength(1)
+  expect(assessments[0].apiKey).toBe(process.env.RECAPTCHA_API_KEY?.trim())
+  expect(assessments[0].url).toBe(`/v1/projects/${process.env.RECAPTCHA_PROJECT_ID?.trim()}/assessments`)
+  expect(assessments[0].body.event).toEqual({ token: 'e2e-token-contact', expectedAction: 'contact', siteKey })
+  expect(resend!.requests.length - before.mails).toBe(1)
+})
+
+test('with reCAPTCHA, a low score is refused without sending and the typed text is kept', async ({ page }) => {
+  test.skip(!recaptcha || !resend, 'needs both local doubles (RECAPTCHA_API_BASE_URL and RESEND_BASE_URL)')
+  recaptcha!.state.score = 0.1
+  const form = await openForm(page)
+  const mails = resend!.requests.length
+  await fillValid(page)
+  await form.getByRole('button', { name: 'Envoyer le message' }).click()
+  await expect(form.getByRole('status')).toContainText('protection anti-spam')
+  await expect(form.getByRole('status')).toContainText('09 78 81 32 95')
+  await expect(form.getByLabel('Message')).toHaveValue(TEXT)
+  expect(resend!.requests.length).toBe(mails)
+})
+
 test('the server log never shows the API key nor what visitors typed', async () => {
   const log = fs.readFileSync('.e2e-logs/server.log', 'utf8')
-  for (const forbidden of [apiKey, TEXT, 'marie@example.test', '06 12 34 56 78']) {
+  for (const forbidden of [apiKey, process.env.RECAPTCHA_API_KEY?.trim(), 'e2e-token-contact', TEXT, 'marie@example.test', '06 12 34 56 78']) {
     if (forbidden) expect(log).not.toContain(forbidden)
   }
 })

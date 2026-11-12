@@ -59,6 +59,16 @@ export default function MentionsLegalesPage() {
           (Resend, Inc., États-Unis), et reçues dans la boîte Gmail (Google) du restaurant. Elles ne sont pas
           enregistrées dans la base de données du site.
         </p>
+        {/* Matches lib/contact/recaptcha.ts: reCAPTCHA Enterprise, only when its keys are configured. */}
+        <p>
+          Pour protéger le formulaire contre les envois automatisés (spam), le site utilise le service reCAPTCHA
+          de Google (Google Ireland Limited / Google LLC), qui analyse des informations techniques sur votre
+          navigation (adresse IP, navigateur, interactions avec la page) lors de l&apos;envoi du formulaire. Le
+          contenu de votre message n&apos;est pas transmis à Google. Ce traitement repose sur l&apos;intérêt légitime
+          de l&apos;éditeur à se prémunir contre les abus ; son utilisation relève des{' '}
+          <a href="https://policies.google.com/privacy">règles de confidentialité</a> et des{' '}
+          <a href="https://policies.google.com/terms">conditions d&apos;utilisation</a> de Google.
+        </p>
         <p>
           Conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et
           Libertés, vous disposez d&apos;un droit d&apos;accès, de rectification, d&apos;effacement,
@@ -72,7 +82,8 @@ export default function MentionsLegalesPage() {
         <p>
           Ce site ne dépose aucun cookie de mesure d&apos;audience ni de publicité. Seul l&apos;espace
           d&apos;administration, réservé à l&apos;équipe du restaurant, utilise un cookie de session strictement
-          nécessaire à la connexion.
+          nécessaire à la connexion. Le service reCAPTCHA de Google, chargé avec le formulaire de contact, peut
+          enregistrer ses propres données techniques dans votre navigateur pour sa fonction de sécurité.
         </p>
         <p>
           Le module de réservation en ligne est fourni par DISH (reservation.dish.co) et proposé sur les
