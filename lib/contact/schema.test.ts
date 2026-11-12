@@ -39,6 +39,12 @@ describe('parseContactForm', () => {
     expect(parseContactForm(form({ ...valid, $ACTION_ID_abc: '' })).kind).toBe('valid')
   })
 
+  it('leaves the reCAPTCHA token out of the message', () => {
+    const result = parseContactForm(form({ ...valid, 'recaptcha-token': 'test-token' }))
+    expect(result.kind).toBe('valid')
+    expect(JSON.stringify(result)).not.toContain('test-token')
+  })
+
   it('treats a filled honeypot as spam, whatever the other fields', () => {
     expect(parseContactForm(form({ ...valid, website: 'http://spam.example' }))).toEqual({ kind: 'spam' })
     expect(parseContactForm(form({ website: 'x' }))).toEqual({ kind: 'spam' })

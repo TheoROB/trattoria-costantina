@@ -25,3 +25,7 @@ export type ContactState = {
 export const EMPTY_CONTACT_VALUES: ContactValues = { name: '', email: '', phone: '', message: '' }
 
 export const INITIAL_CONTACT_STATE: ContactState = { status: 'idle', message: null, fieldErrors: {}, values: EMPTY_CONTACT_VALUES }
+
+// reCAPTCHA Enterprise token, filled at submit time (lib/contact/recaptcha-client.ts), and the action it is bound to.
+export const RECAPTCHA_TOKEN_FIELD = 'recaptcha-token'
+export const CONTACT_RECAPTCHA_ACTION = 'contact'

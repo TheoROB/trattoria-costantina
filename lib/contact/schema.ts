@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { formDataToObject } from '@/lib/menu/admin-input'
-import { CONTACT_LIMITS, EMPTY_CONTACT_VALUES, HONEYPOT_FIELD, type ContactField, type ContactValues } from './fields'
+import { CONTACT_LIMITS, EMPTY_CONTACT_VALUES, HONEYPOT_FIELD, RECAPTCHA_TOKEN_FIELD, type ContactField, type ContactValues } from './fields'
 
 export type ContactMessage = { name: string; email: string; phone: string | null; message: string }
 
@@ -61,6 +61,8 @@ export function parseContactForm(formData: FormData): ContactParseResult {
   const object = formDataToObject(formData)
   if (!object) return { kind: 'invalid', fieldErrors: {}, values: EMPTY_CONTACT_VALUES }
   const { [HONEYPOT_FIELD]: honeypot, ...fields } = object
+  // Checked separately by the Server Action (lib/contact/recaptcha.ts), never part of the message.
+  delete fields[RECAPTCHA_TOKEN_FIELD]
   if (honeypot) return { kind: 'spam' }
   const result = schema.safeParse(fields)
   if (!result.success) {
