@@ -94,8 +94,22 @@ describe('sendContact', () => {
   it('fakes a success without sending when the honeypot is filled', async () => {
     const sendContact = await loadAction()
     const state = await sendContact(INITIAL_CONTACT_STATE, form({ website: 'https://spam.example' }))
-    expect(state.status).toBe('success')
-    expect(state.message).toBe(CONTACT_MESSAGES.sent)
+    expect(state).toEqual({ status: 'success', message: CONTACT_MESSAGES.sent, fieldErrors: {}, values: INITIAL_CONTACT_STATE.values })
+    expect(fetchMock).not.toHaveBeenCalled()
+    // A short line without anything the bot typed.
+    expect(logs).toEqual(['[contact] spam trap filled, message dropped'])
+  })
+
+  it('refuses a message with a link, without sending, and keeps the typed text', async () => {
+    const sendContact = await loadAction()
+    const text = 'Découvrez votre fiche : https://onpartage.online/fr/med/trattoriacostantina'
+    const state = await sendContact(INITIAL_CONTACT_STATE, form({ message: text }))
+    expect(state).toMatchObject({
+      status: 'error',
+      message: CONTACT_MESSAGES.invalid,
+      fieldErrors: { message: CONTACT_MESSAGES.linkInMessage },
+      values: { message: text },
+    })
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

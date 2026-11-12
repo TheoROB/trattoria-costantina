@@ -13,8 +13,11 @@ const success: ContactState = { status: 'success', message: CONTACT_MESSAGES.sen
 // The message itself is never stored nor logged; log lines carry no personal data.
 export async function sendContact(_previous: ContactState, formData: FormData): Promise<ContactState> {
   const parsed = parseContactForm(formData)
-  // Same answer as a real success, so that bots learn nothing.
-  if (parsed.kind === 'spam') return success
+  // Same answer as a real success, so that bots learn nothing; nothing is sent nor stored.
+  if (parsed.kind === 'spam') {
+    console.info('[contact] spam trap filled, message dropped')
+    return success
+  }
   if (parsed.kind === 'invalid') {
     return { status: 'error', message: CONTACT_MESSAGES.invalid, fieldErrors: parsed.fieldErrors, values: parsed.values }
   }
