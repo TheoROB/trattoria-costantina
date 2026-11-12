@@ -108,6 +108,21 @@ test('server-side errors are shown per field, accessibly, and the typed values a
   await expect(form.getByLabel('Message')).toHaveValue('Court')
 })
 
+test('a link in the message is refused with a visible error on the field', async ({ page }) => {
+  const form = await openForm(page)
+  await fillValid(page)
+  const spam = 'Découvrez votre fiche : onpartage.online/fr/med/trattoriacostantina'
+  await page.getByLabel('Message').fill(spam)
+  await form.getByRole('button', { name: 'Envoyer le message' }).click()
+  await expect(form.getByRole('status')).toHaveText('Certains champs sont à corriger.')
+  await expect(form.getByLabel('Message')).toHaveAttribute('aria-invalid', 'true')
+  await expect(form.getByLabel('Message')).toHaveAccessibleDescription(
+    'Pour des raisons de sécurité, les liens ne sont pas acceptés dans le message. Merci de le retirer.',
+  )
+  await expect(form.getByLabel('Message')).toHaveValue(spam)
+  expect(resend?.requests.some(({ body }) => JSON.stringify(body).includes('onpartage')) ?? false).toBe(false)
+})
+
 test('the form also validates on the server without JavaScript', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false })
   const page = await context.newPage()

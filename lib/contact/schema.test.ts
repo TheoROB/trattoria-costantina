@@ -45,6 +45,19 @@ describe('parseContactForm', () => {
     expect(JSON.stringify(result)).not.toContain('test-token')
   })
 
+  it('refuses links in the name and the message, with a visible field error', () => {
+    const result = parseContactForm(
+      form({ ...valid, name: 'Marie www.promo.fr', message: 'Votre fiche : https://onpartage.online/fr/med/trattoriacostantina' }),
+    )
+    expect(result).toMatchObject({
+      kind: 'invalid',
+      fieldErrors: {
+        name: 'Pour des raisons de sécurité, les liens ne sont pas acceptés dans le nom. Merci de le retirer.',
+        message: 'Pour des raisons de sécurité, les liens ne sont pas acceptés dans le message. Merci de le retirer.',
+      },
+    })
+  })
+
   it('treats a filled honeypot as spam, whatever the other fields', () => {
     expect(parseContactForm(form({ ...valid, website: 'http://spam.example' }))).toEqual({ kind: 'spam' })
     expect(parseContactForm(form({ website: 'x' }))).toEqual({ kind: 'spam' })
