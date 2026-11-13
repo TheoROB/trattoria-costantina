@@ -41,6 +41,22 @@ test('the legal notice gives the publisher legal details', async ({ page }) => {
   await expect(main).not.toContainText('Directeur de la publication')
 })
 
+test('the contact section offers phone and e-mail only, without any form', async ({ page }) => {
+  await page.goto('/')
+  const contact = page.locator('#contact')
+  await expect(contact.getByRole('heading', { level: 2, name: 'Nous contacter' })).toBeVisible()
+  await expect(contact).toContainText(
+    'Pour toute demande (réservation, question, repas de groupe, privatisation…), contactez-nous directement par téléphone ou par e-mail.',
+  )
+  await expect(contact.getByRole('link', { name: '09 78 81 32 95' })).toHaveAttribute('href', 'tel:+33978813295')
+  await expect(contact.getByRole('link', { name: 'trattoria.costantina@gmail.com' })).toHaveAttribute(
+    'href',
+    'mailto:trattoria.costantina@gmail.com',
+  )
+  await expect(contact.getByRole('link', { name: 'réservation en ligne' })).toHaveAttribute('href', '/#reservation')
+  await expect(contact.locator('form, input, textarea, button')).toHaveCount(0)
+})
+
 test('the legal notice has the personal data section linked from the contact form', async ({ page }) => {
   await page.goto('/mentions-legales#donnees-personnelles')
   const heading = page.locator('#donnees-personnelles')

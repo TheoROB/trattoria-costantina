@@ -40,28 +40,11 @@ describe('buildContentSecurityPolicy', () => {
     expect(d['frame-src']).toEqual(['https://reservation.dish.co'])
   })
 
-  it('allows the reCAPTCHA Enterprise scripts and frames only when a site key is configured', () => {
-    const d = directives(buildContentSecurityPolicy({ nonce, isDev: false, recaptcha: true }))
-    expect(d['script-src']).toEqual([
-      "'self'",
-      `'nonce-${nonce}'`,
-      "'strict-dynamic'",
-      'https://www.recaptcha.net/recaptcha/',
-      'https://www.gstatic.com/recaptcha/',
-    ])
-    expect(d['frame-src']).toEqual([
-      'https://reservation.dish.co',
-      'https://www.recaptcha.net/recaptcha/',
-      'https://www.google.com/recaptcha/',
-      'https://recaptcha.google.com/recaptcha/',
-    ])
-    // Assessments are created by the server, never from the browser.
-    expect(d['connect-src']).toEqual(["'self'"])
-    expect(d['style-src']).toEqual(["'self'", `'nonce-${nonce}'`])
-    const without = buildContentSecurityPolicy({ nonce, isDev: false })
-    expect(without).not.toContain('recaptcha')
-    expect(without).not.toContain('google')
-    expect(without).not.toContain('gstatic')
+  it('allows no Google source (reCAPTCHA removed with the contact form)', () => {
+    const csp = buildContentSecurityPolicy({ nonce, isDev: false })
+    expect(csp).not.toContain('recaptcha')
+    expect(csp).not.toContain('google')
+    expect(csp).not.toContain('gstatic')
   })
 
   it('forbids framing, plugins, base hijacking and foreign form targets', () => {

@@ -1,23 +1,41 @@
-import { headers } from 'next/headers'
 import Link from 'next/link'
-import { ContactForm } from './ContactForm'
+import { MailIcon, PhoneIcon } from '@/components/icons'
+import { site } from '@/lib/site'
+import './contact.css'
 
-export async function Contact() {
-  // Per-request CSP nonce set by proxy.ts, for the reCAPTCHA script of the form.
-  const nonce = (await headers()).get('x-nonce') ?? undefined
+// No form: every request goes to the restaurant by phone or by e-mail.
+export function Contact() {
   return (
     <section id="contact" className="section-contact">
       <div className="container">
         <div className="section-header">
           <p className="supertitle"><span className="line"></span>Contact<span className="line"></span></p>
-          <h2>Nous écrire</h2>
-          <p className="section-subtitle">
-            Une question, un repas de groupe, une privatisation ? Écrivez-nous. Pour réserver une table, passez
-            plutôt par la <Link href="/#reservation">réservation en ligne</Link>.
-          </p>
+          <h2>Nous contacter</h2>
         </div>
         <div className="contact-card">
-          <ContactForm nonce={nonce} />
+          <p className="contact-lead">
+            Pour toute demande (réservation, question, repas de groupe, privatisation…), contactez-nous directement
+            par téléphone ou par e-mail.
+          </p>
+          <ul className="contact-info-large contact-channels">
+            <li>
+              <div className="contact-icon"><PhoneIcon /></div>
+              <div>
+                <strong>Téléphone</strong>
+                <span><a href={site.phone.href}>{site.phone.display}</a></span>
+              </div>
+            </li>
+            <li>
+              <div className="contact-icon"><MailIcon /></div>
+              <div>
+                <strong>E-mail</strong>
+                <span><a href={site.email.href}>{site.email.display}</a></span>
+              </div>
+            </li>
+          </ul>
+          <p className="contact-note">
+            Vous pouvez aussi réserver une table avec la <Link href="/#reservation">réservation en ligne</Link>.
+          </p>
         </div>
       </div>
     </section>
