@@ -29,7 +29,6 @@ export function buildRestaurantJsonLd(origin: string) {
     image: `${origin}${OG_IMAGE.url}`,
     logo: `${origin}${LOGO_PATH}`,
     telephone: site.phone.href.replace(/^tel:/, ''),
-    email: site.email.display,
     address: {
       '@type': 'PostalAddress',
       streetAddress: site.address.street,

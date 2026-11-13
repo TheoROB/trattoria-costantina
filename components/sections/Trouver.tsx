@@ -1,4 +1,4 @@
-import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
+import { PhoneIcon, PinIcon } from '@/components/icons'
 import { openingHours, practicalInfo, site } from '@/lib/site'
 import { type GalleryPhoto, TrouverGallery } from './TrouverGallery'
 
@@ -52,13 +52,6 @@ export function Trouver() {
                 <div>
                   <strong>Téléphone</strong>
                   <span><a href={site.phone.href}>{site.phone.display}</a></span>
-                </div>
-              </li>
-              <li>
-                <div className="contact-icon"><MailIcon /></div>
-                <div>
-                  <strong>Email</strong>
-                  <span><a href={site.email.href}>{site.email.display}</a></span>
                 </div>
               </li>
             </ul>

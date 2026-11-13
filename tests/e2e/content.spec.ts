@@ -27,13 +27,11 @@ test('home page contains no placeholder content', async ({ page, request }) => {
   for (const s of PLACEHOLDERS) expect(rendered, s).not.toContain(s)
 })
 
-test('real phone and email are displayed and clickable in "Nous trouver"', async ({ page }) => {
+test('the real phone is displayed and clickable in "Nous trouver", without e-mail', async ({ page }) => {
   await page.goto('/')
   const trouver = page.locator('#trouver')
   await expect(trouver.locator('.contact-info-large a[href="tel:+33978813295"]')).toHaveText('09 78 81 32 95')
-  await expect(trouver.locator('.contact-info-large a[href="mailto:trattoria.costantina@gmail.com"]')).toHaveText(
-    'trattoria.costantina@gmail.com',
-  )
+  await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(0)
   await expect(page.locator('.section-famille a[href="tel:+33978813295"]')).toBeVisible()
 })
 
