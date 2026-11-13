@@ -45,7 +45,6 @@ describe('buildRestaurantJsonLd', () => {
       image: `${origin}/images/og/1280.jpg`,
       logo: `${origin}/images/logo/480.png`,
       telephone: '+33978813295',
-      email: 'trattoria.costantina@gmail.com',
       address: {
         '@type': 'PostalAddress',
         streetAddress: '3 rue Denis Papin',

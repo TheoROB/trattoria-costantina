@@ -1,4 +1,4 @@
-import { MailIcon, PhoneIcon, PinIcon } from '@/components/icons'
+import { PhoneIcon, PinIcon } from '@/components/icons'
 import { site } from '@/lib/site'
 import { DishWidget } from './DishWidget'
 
@@ -23,10 +23,6 @@ export function Reservation() {
               <li>
                 <PhoneIcon />
                 <a href={site.phone.href}>{site.phone.display}</a>
-              </li>
-              <li>
-                <MailIcon />
-                <a href={site.email.href}>{site.email.display}</a>
               </li>
             </ul>
           </div>

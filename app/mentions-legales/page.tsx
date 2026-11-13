@@ -55,7 +55,7 @@ export default function MentionsLegalesPage() {
         <p>
           Le responsable du traitement est la société {site.company.name} ({site.company.legalForm}), éditrice du
           site. Le site ne propose pas de formulaire de contact et ne recueille ni vos coordonnées ni vos messages :
-          toutes les demandes se font par téléphone ou par e-mail.
+          toutes les demandes se font par téléphone.
         </p>
         <p>
           Les e-mails que vous envoyez à l&apos;adresse du restaurant (
