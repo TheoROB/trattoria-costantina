@@ -12,16 +12,7 @@ a chat or a shell command line (it lands in the shell history): use `read -rs` a
 | `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | yes | base64 of a 16/24/32-byte AES key. Read by `next build` and embedded in the build: must be set **before** the build, same value for every process. |
 | `APP_ORIGIN` | yes | `https://trattoriacostantina.fr`. Photo uploads are refused (500, logged) without it. |
 | `MEDIA_ROOT` | yes | Absolute path outside the application, e.g. `/home/<user>/domains/<domain>/trattoria-media`. Refused if relative, `/`, inside the app directory (so `public/`, `.next/`) or under `hbuilds/` (replaced at every deployment). Unset or invalid: uploads fail and `/media/*` answers 404, both logged. |
-| `AUTH_TRUSTED_IP_HEADER` | no | Leave empty until a proxy header is formally verified as not client-controllable. Empty: no per-IP limits, only the global contact cap (30/h) and the per-account login lockout apply. |
-| `RESEND_API_KEY` | yes (contact) | Resend API key, "Sending access" restricted to `trattoriacostantina.fr` (secret). |
-| `CONTACT_FROM` | yes (contact) | `Trattoria Costantina <site@trattoriacostantina.fr>`. Must be on the domain verified at Resend, otherwise Resend refuses the mail (logged `HTTP 403 validation_error`). |
-| `CONTACT_TO` | yes (contact) | `trattoria.costantina@gmail.com`. No fallback: without it the form shows "temporarily unavailable". |
-| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | yes (contact) | reCAPTCHA Enterprise key id (Google Cloud → Fraud Defense, key "Trattoria", score-based, domain `trattoriacostantina.fr`). Public, but **embedded at build time**: set it before the build. |
-| `RECAPTCHA_PROJECT_ID` | yes (contact) | Google Cloud project **ID** (not its display name) that owns the key. |
-| `RECAPTCHA_API_KEY` | yes (contact) | Google Cloud API key restricted to the reCAPTCHA Enterprise API (secret). |
-| `RECAPTCHA_MIN_SCORE` | no | Score threshold, default `0.5`. |
-| `RECAPTCHA_API_BASE_URL` | **no — never set** | Tests only (local reCAPTCHA double, loopback only). |
-| `RESEND_BASE_URL` | **no — never set** | Tests only (local Resend double, loopback only). Any non-loopback value disables the form. |
+| `AUTH_TRUSTED_IP_HEADER` | no | Leave empty until a proxy header is formally verified as not client-controllable. Empty: no per-IP limits, only the per-account login lockout applies. |
 | `HOSTINGER_PROBE_TOKEN` | **no — delete** | Only used by the throwaway `chore/hostinger-probe` branch; nothing in the production code reads it. |
 
 Never upload a `.env*` file: `next start` would load `.env.local` / `.env.production` from the app directory.
@@ -98,31 +89,22 @@ sessions, and photo upload limits (`media_upload_attempts`) are keyed by account
 Delete the variable in hPanel (and any test application deployed from `chore/hostinger-probe`). Check:
 `/api/hostinger-probe` answers 404 on production.
 
-## Contact form (Resend)
+## Contact form removed
 
-- [ ] Resend → Domains: `trattoriacostantina.fr` is **Verified** (SPF and DKIM records added in hPanel → DNS; keep any
-      existing SPF record for other senders merged into a single `v=spf1` record). Optional but recommended: a DMARC record.
-- [ ] Resend → API Keys: create a key with "Sending access" restricted to `trattoriacostantina.fr`. Copy it straight into
-      hPanel (`RESEND_API_KEY`); never paste it anywhere else. Revoke the key in Resend if it ever leaks.
-- [ ] Set `RESEND_API_KEY`, `CONTACT_FROM` and `CONTACT_TO` (table above) in the Hostinger Node.js environment, and make
-      sure `RESEND_BASE_URL` is **not** set. Remove the old `SMTP_*` variables if they are still there (no longer read).
-- [ ] After deploying: send a real message from the site, check it arrives at trattoria.costantina@gmail.com (also check
-      spam), with the expected sender, that "Reply" targets the visitor, and that it appears in Resend → Emails as delivered.
-- [ ] Check the logs contain no address, message text or API key. Only these lines are expected:
-      - `[contact] form disabled, mail configuration incomplete: …`: a variable is missing or invalid (only names are listed);
-      - `[contact] send failed: HTTP <status> [<resend error name>]`, `… timeout` or `… network error`: Resend refused or
-        could not be reached (e.g. `HTTP 401`/`403`: wrong key or unverified domain, `HTTP 429`: quota or rate limit).
+The site no longer has a contact form (requests go to the restaurant by phone or by e-mail), so it no longer sends
+mails through Resend nor uses Google reCAPTCHA. Once this version is deployed:
 
-## Contact form (reCAPTCHA Enterprise)
-
-- [ ] Google Cloud → Fraud Defense → key "Trattoria": `trattoriacostantina.fr` is in the allowed domains.
-- [ ] The project has an active billing account and the reCAPTCHA Enterprise API is enabled; the Cloud Data Processing
-      Addendum is accepted.
-- [ ] Set the three `RECAPTCHA_*` / `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` variables together (only some of them: the form is
-      disabled, logged) and check `APP_ORIGIN` is `https://trattoriacostantina.fr` (the token hostname is checked against it).
-- [ ] After deploying: send a real message; the browser console shows no CSP violation, the server log shows no
-      `[contact]` reCAPTCHA refusal. If no frame is loaded from `www.google.com`, the `google.com` entries of `frame-src`
-      in `lib/security/headers.ts` can be removed.
+- [ ] hPanel → Node.js app → Environment variables: **delete** `RESEND_API_KEY`, `RESEND_BASE_URL`, `CONTACT_FROM`,
+      `CONTACT_TO`, `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`, `RECAPTCHA_PROJECT_ID`, `RECAPTCHA_API_KEY`, `RECAPTCHA_MIN_SCORE`
+      and `RECAPTCHA_API_BASE_URL` (and any old `SMTP_*` variable still there). Nothing reads them anymore.
+- [ ] Resend: revoke the API key, then remove the `trattoriacostantina.fr` domain (or close the account if it served
+      nothing else).
+- [ ] hPanel → DNS: once Resend is no longer used, remove the records added for it (`resend._domainkey`, `send`,
+      `rsend`). If a Resend entry was merged into the domain's main `v=spf1` record, remove only that entry. Keep the
+      records of the domain's Hostinger mail; the restaurant's mailbox (`trattoria.costantina@gmail.com`) is on Gmail
+      and does not depend on any of them.
+- [ ] Google Cloud: delete the reCAPTCHA Enterprise key "Trattoria" and the API key restricted to the reCAPTCHA
+      Enterprise API; the API can then be disabled (or the project shut down if it served nothing else).
 
 ## Backups
 
