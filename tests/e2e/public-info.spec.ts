@@ -41,25 +41,37 @@ test('the legal notice gives the publisher legal details', async ({ page }) => {
   await expect(main).not.toContainText('Directeur de la publication')
 })
 
-test('the legal notice has the personal data section linked from the contact form', async ({ page }) => {
+test('the contact section offers phone and e-mail only, without any form', async ({ page }) => {
+  await page.goto('/')
+  const contact = page.locator('#contact')
+  await expect(contact.getByRole('heading', { level: 2, name: 'Nous contacter' })).toBeVisible()
+  await expect(contact).toContainText(
+    'Pour toute demande (réservation, question, repas de groupe, privatisation…), contactez-nous directement par téléphone ou par e-mail.',
+  )
+  await expect(contact.getByRole('link', { name: '09 78 81 32 95' })).toHaveAttribute('href', 'tel:+33978813295')
+  await expect(contact.getByRole('link', { name: 'trattoria.costantina@gmail.com' })).toHaveAttribute(
+    'href',
+    'mailto:trattoria.costantina@gmail.com',
+  )
+  await expect(contact.getByRole('link', { name: 'réservation en ligne' })).toHaveAttribute('href', '/#reservation')
+  await expect(contact.locator('form, input, textarea, button')).toHaveCount(0)
+})
+
+test('the legal notice has an accurate personal data section', async ({ page }) => {
   await page.goto('/mentions-legales#donnees-personnelles')
   const heading = page.locator('#donnees-personnelles')
   await expect(heading).toHaveText('Données personnelles')
   await expect(heading).toBeInViewport()
   const main = page.locator('main')
   await expect(main).toContainText('Le responsable du traitement est la société COSTANTINA')
-  await expect(main).toContainText('formulaire de contact')
-  await expect(main).toContainText('ne sont pas enregistrées dans la base de données du site')
-  await expect(main).toContainText("via le service d'envoi d'e-mails Resend (Resend, Inc., États-Unis), et reçues dans la boîte Gmail (Google) du restaurant")
+  await expect(main).toContainText('Le site ne propose pas de formulaire de contact et ne recueille ni vos coordonnées ni vos messages')
+  await expect(main).toContainText('sont reçus dans sa boîte Gmail et servent uniquement à vous répondre')
   for (const right of ['accès', 'rectification', 'effacement', 'opposition', 'limitation']) {
     await expect(main, right).toContainText(right)
   }
   await expect(main.getByRole('link', { name: 'www.cnil.fr' })).toHaveAttribute('href', 'https://www.cnil.fr')
   await expect(main.getByRole('heading', { name: 'Cookies' })).toBeVisible()
-  // reCAPTCHA: Google as a processor, no link to Google's own policies (since April 2, 2026), its necessary cookie.
-  await expect(main).toContainText('Google agit en qualité de sous-traitant')
-  await expect(main).toContainText('article 6.1.f du RGPD')
-  await expect(main).toContainText("le contenu de votre message n'est pas transmis à Google")
-  await expect(main).toContainText('_GRECAPTCHA')
-  await expect(main.locator('a[href*="policies.google.com"]')).toHaveCount(0)
+  await expect(main).toContainText('cookie de session strictement nécessaire')
+  // Resend and reCAPTCHA left with the contact form.
+  for (const gone of ['Resend', 'reCAPTCHA', '_GRECAPTCHA', 'États-Unis']) await expect(main, gone).not.toContainText(gone)
 })

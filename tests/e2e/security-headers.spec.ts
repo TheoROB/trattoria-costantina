@@ -9,16 +9,9 @@ test('home page sends a nonce-based CSP without unsafe script sources', async ({
   expect(csp).not.toContain('unsafe-eval')
   expect(csp).toContain('frame-src https://reservation.dish.co')
   expect(csp).toContain("frame-ancestors 'none'")
-  // Google only when a reCAPTCHA site key is built in, and never for fetch/XHR.
-  if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim()) {
-    expect(csp).toContain('https://www.recaptcha.net/recaptcha/ https://www.gstatic.com/recaptcha/')
-    expect(csp).toContain('frame-src https://reservation.dish.co https://www.recaptcha.net/recaptcha/ ')
-    // Scripts only from www.recaptcha.net and gstatic, never www.google.com.
-    expect(csp).not.toMatch(/script-src[^;]*google\.com/)
-  } else {
-    expect(csp).not.toContain('recaptcha')
-    expect(csp).not.toContain('google')
-  }
+  // No third party besides DISH: Google (reCAPTCHA) left with the contact form.
+  expect(csp).not.toContain('recaptcha')
+  expect(csp).not.toContain('google')
   expect(csp).toContain("connect-src 'self';")
 })
 
@@ -77,9 +70,8 @@ test('page loads with the CSP enforced and no console errors or violations', asy
   await page.goto('/', { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   expect(errors).toEqual([])
-  // Only the expected DISH widget document may leave the origin (and reCAPTCHA when a site key is built in).
-  const recaptcha = !!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim()
-  const external = await page.evaluate((recaptcha) =>
+  // Only the expected DISH widget document may leave the origin.
+  const external = await page.evaluate(() =>
     performance
       .getEntriesByType('resource')
       .map((r) => r.name)
@@ -88,10 +80,8 @@ test('page loads with the CSP enforced and no console errors or violations', asy
           !u.startsWith(location.origin) &&
           !u.startsWith(
             'https://reservation.dish.co/widget/hydra-0ab49cf0-0e40-11f0-b2b0-112fd36a4b37',
-          ) &&
-          !(recaptcha && /^https:\/\/(www\.recaptcha\.net|www\.gstatic\.com|www\.google\.com|recaptcha\.google\.com)\/recaptcha\//.test(u)),
+          ),
       ),
-    recaptcha,
   )
   expect(external).toEqual([])
 })

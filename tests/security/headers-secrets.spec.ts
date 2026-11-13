@@ -145,8 +145,6 @@ test('admin HTML, RSC responses and server logs never expose credentials or secr
     if (value) forbidden.push(value)
   }
   if (process.env.DATABASE_URL_TEST) forbidden.push(process.env.DATABASE_URL_TEST)
-  // Its name is logged when the contact form is not configured; its value never is.
-  if (process.env.RESEND_API_KEY?.trim()) forbidden.push(process.env.RESEND_API_KEY.trim())
 
   for (const secret of forbidden) expect(inspected).not.toContain(secret)
 })
