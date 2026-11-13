@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { MailIcon, PhoneIcon } from '@/components/icons'
+import { PhoneIcon } from '@/components/icons'
 import { site } from '@/lib/site'
 import './contact.css'
 
-// No form: every request goes to the restaurant by phone or by e-mail.
+// No form: every request goes to the restaurant by phone.
 export function Contact() {
   return (
     <section id="contact" className="section-contact">
@@ -15,7 +15,7 @@ export function Contact() {
         <div className="contact-card">
           <p className="contact-lead">
             Pour toute demande (réservation, question, repas de groupe, privatisation…), contactez-nous directement
-            par téléphone ou par e-mail.
+            par téléphone.
           </p>
           <ul className="contact-info-large contact-channels">
             <li>
@@ -23,13 +23,6 @@ export function Contact() {
               <div>
                 <strong>Téléphone</strong>
                 <span><a href={site.phone.href}>{site.phone.display}</a></span>
-              </div>
-            </li>
-            <li>
-              <div className="contact-icon"><MailIcon /></div>
-              <div>
-                <strong>E-mail</strong>
-                <span><a href={site.email.href}>{site.email.display}</a></span>
               </div>
             </li>
           </ul>
